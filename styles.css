@@ -1,0 +1,2035 @@
+/* Estilos globais */
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #2e2e2e;
+    margin: 0;
+    overflow-y: auto;
+    color: white;
+    font-family: Arial, sans-serif;
+
+    user-select: none; /* Impede a seleção de texto */
+
+}
+
+h {
+    font-size: 1.2em;
+    color: #fff;
+    margin-top: 5px;
+}
+
+
+/* Mesa de jogo */
+.game-table {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+   max-width: 1200px;
+    padding: 5px;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+
+/* Contêiner dos decks */
+.decks-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+/* Estilo de cada deck */
+.deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    width: 80px; /* */
+}
+
+.deck-back {
+    width: 100%;
+    height: auto;
+    max-width: 80px;  /* Tamanho fixo para evitar grandes variações */
+    border: 2px solid #fff;
+}
+
+.deck p {
+    margin: 5px 0;
+    font-size: 11px;
+    font-weight: bold; /*nEGRITO    */
+
+}
+
+
+
+
+/* Estilizar a barra de rolagem apenas para dispositivos móveis */
+@media (max-width: 768px) {
+    .table-wrapper::-webkit-scrollbar {
+        width: 12px; /* Largura da barra vertical maior para celular */
+        height: 12px; /* Altura da barra horizontal maior para celular */
+    }
+
+    .table-wrapper::-webkit-scrollbar-track {
+        background: #e0e0e0; /* Cor de fundo da área de rolagem */
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb {
+        background-color: #888; /* Cor da barra de rolagem */
+        border-radius: 10px; /* Bordas arredondadas */
+    }
+
+    .table-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #555; /* Cor mais escura ao passar o dedo */
+    }
+}
+
+
+.note.is-locked {
+    cursor: default !important; /* Mostra a seta normal */
+    user-select: none;          /* Impede seleção de texto */
+    touch-action: none;         /* Impede comportamento de toque */
+}
+
+
+
+.table-area {
+    position: relative;
+    width: 6000px; /* Tamanho fixo da mesa */
+    height: 6000px;
+    background-color: #4a4a4a;
+    padding: 5px;
+    box-sizing: border-box;
+    touch-action: none; /* Desabilita comportamento de toque padrão */
+}
+
+
+
+
+
+
+
+
+
+
+/* Contêiner flexível para as colunas CONTROLA O TAMANHO DAS DUAS COU */
+.layout-container {
+    display: flex;
+    width: 100vw;
+    height: 95vh; 
+    gap: 10px; /* Espaçamento entre as colunas */
+}
+
+
+/* A mesa de jogo continua com seu estilo */
+.table-wrapper {
+    width: 100%;
+    height: 85%;
+    border: 2px solid #fff;
+    background-color: #333;
+    overflow: auto; /* Permite rolagem na mesa de jogo */
+    position: relative;
+    cursor: grab;
+
+}
+
+/* Estiliza os decks na coluna esquerda */
+.deck {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px; /* Espaço entre os decks */
+}
+
+.deck-back {
+    width: 50px;
+    height: auto;
+    border: 2px solid #fff;
+}
+
+
+
+
+
+
+
+
+/* ____________________________________________________________________________________________ */
+/*Abaixo é o estilo do botão para alterar a cor de uma imagem! */
+#color-button {
+  padding: 10px 20px;
+  font-weight: bold;
+  background-color: #111;
+  color: white;
+  border: 3px solid;
+  border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet) 1;
+  border-image-slice: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+#color-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+
+
+
+
+
+
+/* ____________________________________________________________________________________________ */
+
+
+
+
+
+
+
+
+
+
+/* Estilo especial para as cartas do deck1 */
+.arena-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 20px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+
+
+}
+
+
+
+
+
+
+
+
+/* Estilo das cartas */
+.card {
+   height: 200px;
+   margin: 5px;
+   position: absolute;
+   cursor: grab;
+   transform: scale(1); /* Valor padrão de escala */
+   transform-origin: center center;
+   transition: transform 0.6s, border 0.2s, box-shadow 0.6s ease-out; /* Transição suave para box-shadow */
+ border: 1px solid transparent;}
+
+
+
+/* Estilo especial para as cartas do deck1 */
+.deck1-card {
+    /* width: 6px;  Ajustado para não ocupar muito espaço */
+    height: 1000px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    
+    outline: 3px solid rgba(0, 0, 0, 0.1); /* Preto com 5% de opacidade */
+    
+ /* Sombra mais escura e intensa */
+   /* box-shadow: 0px 8px 16px rgba(0, 0, 0, 1);  Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+   /* .deck1-card:hover {
+  Ao passar o mouse, sombra ainda mais intensa 
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05); 
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente 
+} */
+
+
+
+/* ___________________________________________________________________________ */
+
+/* Estilo para os Decks de Cartas em geral! */
+.card_decks {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 150px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+/* transform: scale(1);  Valor padrão de escala */
+/* transform-origin: center center; */
+    /*  transition: transform 0.3s, border 0.2s, box-shadow 0.3s; */
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    
+    outline: 3px solid rgba(0, 0, 0, 0.1); /* Preto com 5% de opacidade */
+    
+ /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1);  Sombra mais escura com maior opacidade 
+    
+     Para garantir que as partes transparentes externas não sejam incluídas na sombra 
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+    .card_decks:hover {
+  Ao passar o mouse, sombra ainda mais intensa 
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05); 
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente */
+} 
+
+
+
+/*___________________________________________________________________________________________*/
+
+
+/* Estilo para os Decks de Cartas em geral! */
+.fichas_decks {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 200px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    
+    outline: 3px solid rgba(0, 0, 0, 0.1); /* Preto com 5% de opacidade */
+    
+ /* Sombra mais escura e intensa */
+   /* box-shadow: 0px 8px 16px rgba(0, 0, 0, 1);  Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+   /* .fichas_decks:hover {
+  Ao passar o mouse, sombra ainda mais intensa 
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05); 
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente 
+} */
+
+
+
+
+/*____________________________________________________________________________________________*/
+
+/* Estilo para os Decks de Cartas em geral! */
+.fichas2_decks {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 2000px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    
+    outline: 3px solid rgba(0, 0, 0, 0.1); /* Preto com 5% de opacidade */
+    
+ /* Sombra mais escura e intensa */
+   /* box-shadow: 0px 8px 16px rgba(0, 0, 0, 1);  Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+   /* .fichas_decks:hover {
+  Ao passar o mouse, sombra ainda mais intensa 
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05); 
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente 
+} */
+
+
+
+
+
+/*___________________________________________________________________________________________*/
+
+
+
+
+
+/* Estilo especial para as cartas do deck1 */
+.deck1miniatura-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 80px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+    
+   outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+    
+ /* Sombra mais escura e intensa */
+   box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+.deck1miniatura-card:hover {
+  Ao passar o mouse, sombra ainda mais intensa 
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05); 
+  /*  border: 2px solid rgba(255, 255, 255, 0.5); */
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente */
+
+} 
+
+
+
+
+
+
+/* Estilo especial para as cartas do deck1  verticais */
+.deck1vertical-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 200px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+    
+   outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+    
+ /* Sombra mais escura e intensa */
+   /* box-shadow: 0px 8px 16px rgba(0, 0, 0, 1);  Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+   /* .deck1-card:hover {
+  Ao passar o mouse, sombra ainda mais intensa 
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05); 
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente 
+} */
+
+
+
+
+
+
+
+
+
+/* Estilo especial para as miniaturas RETANGULARES */
+.deck4miniaturas_retangulares-card {
+    height: 80px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+    transform: scale(1); /* Valor padrão de escala */
+    transform-origin: center center;
+    transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    /* Definir bordas arredondadas para imagens circulares */
+    /*border-radius: 50%; */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+
+  outline: 3px solid black; /* linha preta simula a borda! semore presente*/
+}
+
+.deck4miniaturas_retangulares-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 2px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+
+  outline: 3px solid black; /* linha preta simula a borda! semore presente*/
+}
+
+
+
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+/* Estilo especial para as miniaturas circulares */
+.deck4miniaturas_circulares-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 80px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+    transition: transform 0.3s, border 0.2s;
+    border: 0px solid transparent; /* Sem borda por padrão */
+
+        /* Definir bordas arredondadas para imagens circulares */
+    border-radius: 60%; /* Isso cria o efeito circular */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+.deck4miniaturas_circulares-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.9); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Estilo especial para as cartas do deck1 */
+.deck1maior-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 60px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+/*transform: scale(4); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+    /* Sombra mais escura e intensa */
+   /*  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8); Sombra mais escura com maior opacidade */
+}
+
+
+
+
+
+/*_______________________________________________________________________________*/
+
+/* Estilo especial para as cartas  */
+
+
+/* Estilo especial para as miniaturas circulares */
+.deck1menor-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 60px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+    transition: transform 0.3s, border 0.2s;
+    border: 0px solid transparent; /* Sem borda por padrão */
+
+        /* Definir bordas arredondadas para imagens circulares */
+   /* border-radius: 60%;  Isso cria o efeito circular */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+.deck1menor-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.9); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+.deck1menor2-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 500px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+.deck1menor2-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+
+
+
+
+
+/* Estilo especial para as DADOS  */
+.deck1menor-dado {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 65px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+ /* outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+
+    /* Sombra mais escura e intensa */
+  /*  box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+  /*  overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+.deck1menor-dado:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+/* Estilo especial para as cartas opcionais  */
+.deck1menor-card-opcional {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 140px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+.deck2-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 60px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+    
+   outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+    
+ /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+/* Estilo especial para as cartas do deck2 */
+
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+.deck2heroi-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 80px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+    
+  outline: 3px solid red; /* linha vermelha simula a borda! semore presente*/
+    
+ /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+/* Estilo especial para as cartas do deck2 */
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+.deck3-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 320px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+      transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 2px solid transparent; /* Sem borda por padrão */
+    
+    
+   outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+    
+ /* Sombra mais escura e intensa */
+  /*  box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    /* overflow: hidden; Oculta áreas externas da borda arredondada */
+}
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+/* Estilo especial para as miniaturas circulares */
+.deck4circular-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 45px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+    transition: transform 0.3s, border 0.2s;
+    border: 0px solid transparent; /* Sem borda por padrão */
+
+        /* Definir bordas arredondadas para imagens circulares */
+    border-radius: 60%; /* Isso cria o efeito circular */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+}
+
+.deck4circular-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.9); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+/*_______________________________________________________________________________*/
+
+
+/* Estilo especial para as miniaturas circulares (Tokens) CIRCULOS PERFEITOS */
+.deckXcircular-card {
+    width: 45px;
+    height: 45px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+    transform: scale(1);
+    transform-origin: center center;
+    transition: transform 0.3s, border 0.2s;
+    border: 0px solid transparent; 
+
+    /* === A MÁGICA PARA A IMAGEM NÃO SER CORTADA === */
+    object-fit: contain; /* Garante que 100% da imagem caiba no espaço */
+    padding: 3px; /* Empurra a imagem para o centro, afastando as quinas do corte circular */
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total (mantém em 45px) */
+    background-color: #4a4a4a; /* Cor do fundo do token (ajuste para a cor que preferir, como #fff ou #000) */
+
+    border-radius: 50%; /* Mantém o formato circular perfeito */
+   /* box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8); */
+    overflow: hidden; 
+}
+
+.deckXcircular-card:hover {
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.9); 
+    transform: scale(1.05); 
+    border: 1px solid rgba(255, 255, 255, 0.5); 
+}
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+
+
+/* Estilo especial para os marcadores RASTREAR miniaturas circulares */
+.rastrear-marcador {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 55px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+    transition: transform 0.3s, border 0.2s;
+    border: 0px solid transparent; /* Sem borda por padrão */
+
+        /* Definir bordas arredondadas para imagens circulares */
+    border-radius: 60%; /* Isso cria o efeito circular */
+
+    
+    opacity: 0.4 !important; /* Força a transparência */
+    filter: alpha(opacity=40); /* Compatibilidade com navegadores antigos */
+    pointer-events: none !important;
+
+}
+
+
+
+
+
+
+/*_________________________________________________________________________*/
+
+
+
+
+/* Estilo especial para as miniaturas RETANGULARES */
+.deck4-card {
+    height: 180px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+    transform: scale(1); /* Valor padrão de escala */
+    transform-origin: center center;
+    transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    /* Definir bordas arredondadas para imagens circulares */
+    /*border-radius: 50%; */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+}
+
+.deck4-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+   /* border: 2px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+}
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+.deck4maior-card {
+    height: 470px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+    transform: scale(1); /* Valor padrão de escala */
+    transform-origin: center center;
+    transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    /* Definir bordas arredondadas para imagens circulares */
+    /*border-radius: 50%; */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+}
+
+/* .deck4maior-card:hover {
+
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); 
+    transform: scale(1.05);
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); 
+
+} */
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+
+
+
+/*CONTROLA O TAMANHO DA FONTE DOS BOTOES DOS DECKS!*/
+ .deck button {
+        font-size: 11px; /* Reduz o tamanho da fonte dos botões */
+        padding: 4px 8px; /* Diminui o tamanho dos botões */
+    font-weight: bold; /* negrito*/
+        padding: 4px 8px; /* Diminui o tamanho dos botões */
+    }
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+/* Estilo especial para os cubos */
+.deck8-card {
+    /* width: 60px;  Ajustado para não ocupar muito espaço */
+    height: 52px;
+    margin: 5px;
+    position: absolute;
+    cursor: grab;
+transform: scale(1); /* Valor padrão de escala */
+transform-origin: center center;
+    transition: transform 0.3s, border 0.2s;
+    border: 0px solid transparent; /* Sem borda por padrão */
+
+        /* Definir bordas arredondadas para imagens circulares */
+    border-radius: 60%; /* Isso cria o efeito circular */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+
+}
+
+.deck8-card:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.9); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+    border: 1px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+/* Estilo especial para as miniaturas circulares */
+.deck4circular-spinner {
+    height: 85px;
+    margin: 1px;
+    position: absolute;
+    cursor: grab;
+    transform: scale(1); /* Valor padrão de escala */
+    transform-origin: center center;
+    transition: transform 0.3s, border 0.2s, box-shadow 0.3s;
+    border: 1px solid transparent; /* Sem borda por padrão */
+    
+    /* Definir bordas arredondadas para imagens circulares */
+    border-radius: 80%; /* Isso cria o efeito circular */
+
+    /* Sombra mais escura e intensa */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); /* Sombra mais escura com maior opacidade */
+    
+    /* Para garantir que as partes transparentes externas não sejam incluídas na sombra */
+    overflow: hidden; /* Oculta áreas externas da borda arredondada */
+
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+}
+
+
+.deck4circular-spinner:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); /* Sombra mais densa ao passar o mouse */
+    transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+  /*  border: 2px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+
+ outline: 3px solid rgba(0, 0, 0, 0.1); /* linha preta simula a borda! semore presente*/
+
+}
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+/* Contorno vermelho para a carta selecionada */
+.card.selected {
+   /* border: 2px solid red; */
+    box-shadow: 0 0 0 2px red; /* "simula" uma borda de 2px vermelha */
+}
+
+}
+
+/* Pop-up de seleção de cartas */
+.card-selector {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    z-index: 1000000000000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-selector-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.card-selector img {
+    width: 60px;
+    height: 90px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.card-selector img:hover {
+    transform: scale(1.1);
+}
+
+.hidden {
+    display: none;
+}
+
+
+/* Pop-up de opções das cartas */
+/* Substitua as antigas classes .card-options no seu styles.css por estas: */
+/* Pop-up de opções das cartas - AGORA SLIM */
+.card-options {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    
+    /* ALTERADO: Reduzimos a altura mínima drasticamente de 85px para 45px */
+    height: auto; 
+    min-height: 45px; 
+    
+    /* ALTERADO: Reduzido o respiro superior/inferior de 15px para apenas 4px */
+    padding: 4px 15px; 
+    
+    transform: translateY(100%);
+    background-color: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border-top: 2px solid gold;
+    border-radius: 15px 15px 0 0;
+    z-index: 1000000000000001;
+    
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start;
+    
+    /* ALTERADO: Aproxima um pouco mais os botões uns dos outros (de 12px para 8px) */
+    gap: 8px; 
+    box-sizing: border-box;
+    
+    overflow-x: auto;
+    white-space: nowrap; 
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-options::-webkit-scrollbar {
+    display: none;
+}
+
+/* Quando ativado pelo JS, a barra sobe */
+.card-options.show {
+    transform: translateY(0);
+}
+
+/* Padronização dos botões internos da barra - AGORA COMPACTOS */
+.card-options button {
+    flex-shrink: 0;
+    
+    /* ALTERADO: Altura mínima do botão reduzida de 48px para 32px */
+    height: auto; 
+    min-height: 32px; 
+    max-width: 160px; 
+    white-space: normal; 
+    line-height: 1.1; 
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    
+    /* ALTERADO: Reduzido o estofamento interno do botão de 8px para 4px no topo/base */
+    padding: 4px 10px; 
+    
+    /* ALTERADO: Reduzido levemente o texto de 13px para 12px para caber melhor na barra fina */
+    font-size: 12px; 
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.card-options button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: gold;
+}
+/*_______________________________________________________________________________*/
+
+
+
+
+/*programando classes para alterar as bordas no lugar do border do codigo*/
+.card.locked2 {
+  /* Diminuído de 0.2 para 0.08 (Fica bem mais sutil e transparente na mesa) */
+  border: 1px dashed rgba(200, 200, 200, 0.08);
+  box-shadow: none ; /*apaga sombra caso exista na imagem */
+}
+
+.card.fixed-on-top {
+  /* Trocado 'red' sólido por rgba. 
+     O vermelho puro é (255, 0, 0), e colocamos 0.3 para ficar um vermelho suave/transparente */
+  border: 1px dashed rgba(255, 0, 0, 0.1);
+}
+
+.card.destravada {
+  border: 1px dashed transparent; /* padrão sem destaque */
+}
+
+
+/*_______________________________________________________________________________*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Botões de controle */
+button {
+    padding: 2px 3px;
+    font-size: 13px;
+    cursor: pointer;
+    background-color: #5a5a5a;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+    flex: 1 1 40%;
+    max-width: 150px;
+    margin: 5px;
+}
+
+button:hover {
+    background-color: #767676;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    margin-top: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+/*___________________________________________________________________________________________________*/
+
+/* 1. A Carta/Dado Selecionado */
+.card.selected, .selected {
+    position: relative;
+    /* Adicionamos a sombra original (0px 8px 16px) junto com a aura */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8), 0 0 0 3px rgba(255, 215, 0, 1), 0 0 15px 2px rgba(255, 215, 0, 0.9);
+    
+    animation: pulse-aura-otimizada 1.5s infinite ease-in-out;
+}
+
+/* 2. O SEGREDO: Forçar a prioridade da animação de giro */
+.flip-animation {
+    /* O !important garante que o giro "ganhe" da aura se for necessário */
+    animation: rollDice 1.5s ease-in-out !important;
+}
+
+/* 3. A animação da aura agora mantém a sombra fixa na base */
+@keyframes pulse-aura-otimizada {
+    0% { box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8), 0 0 0 3px rgba(255, 215, 0, 1), 0 0 15px 2px rgba(255, 215, 0, 0.9); }
+    50% { box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8), 0 0 0 6px rgba(255, 215, 0, 0.6), 0 0 35px 8px rgba(255, 215, 0, 0.4); }
+    100% { box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.8), 0 0 0 3px rgba(255, 215, 0, 1), 0 0 15px 2px rgba(255, 215, 0, 0.9); }
+}
+
+/* 4. A animação do dado */
+@keyframes rollDice {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(720deg); }
+}
+
+
+/*_______________________________________________________________________________*/
+  
+    
+    
+    
+    
+    
+    
+    
+    
+}
+
+
+.moving-deck {
+    border: 8px solid red;  /* Borda mais grossa durante o movimento */
+}
+
+
+
+.card-container {
+    position: relative;
+    display: inline-block;
+}
+
+.roll-icon { 
+font-size: 24px; /* Tamanho do ícone */ background: none; 
+border: none;
+cursor: pointer;
+margin-top: 10px;
+z-index: 1000;  
+ }
+
+
+
+.flip-button {
+    position: absolute;
+    top: 5px;    /* Posição no topo da carta */
+    right: 5px;  /* Posição no lado direito da carta */
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;  /* Tamanho do ícone */
+    z-index: 10;  /* Certifique-se de que o botão fique acima da carta */
+}
+
+.flip-button:hover {
+    color: #555;  /* Alterar cor ao passar o mouse */
+}
+
+
+/* Botão FECHAR do popup principal*/
+.card-options .close-button {
+    background-color: red; /* Cor de fundo vermelha */
+    color: white; /* Cor do texto em branco */
+    padding: 8px 18px; /* Mesma formatação que outros botões */
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.card-options .close-button:hover {
+    background-color: darkred; /* Cor de fundo ao passar o mouse */
+}
+
+
+.card-options .grouping-button {
+    background-color: #2C2C2C; /* Cinza bem escuro */
+    color: white; /* Cor do texto em branco */
+    padding: 8px 18px; /* Mesma formatação que outros botões */
+    font-size: 16px;
+    border: 1px solid darkred; /* Borda de 1px com a cor darkred */
+    border-radius: 5px;
+    transition: background-color 0.3s, border-color 0.3s; /* Transição suave para borda e fundo */
+}
+
+.card-options .grouping-button:hover {
+    background-color: darkred; /* Cor de fundo ao passar o mouse */
+    border-color: white; /* Muda a cor da borda ao passar o mouse (opcional) */
+}
+
+
+
+
+
+
+
+
+.dice {
+    width: 150px; /* Largura do dado */
+    height: 150px; /* Altura do dado */
+    background-color: lightgrey; /* Cor de fundo do dado */
+    border: 2px solid white; /* Borda do dado */
+    display: flex; /* Alinhamento do conteúdo */
+    align-items: center; /* Centraliza verticalmente */
+    justify-content: center; /* Centraliza horizontalmente */
+    position: relative; /* Para o botão de girar */
+    transform-origin: 50% 50%; /* Gira pelo centro */
+   z-index: 1;
+      /*  Sombra mais escura e intensa */
+   box-shadow: 0px 8px 16px rgba(0, 0, 0, 1); 
+
+}
+
+.dice:hover {
+    /* Ao passar o mouse, sombra ainda mais intensa */
+    box-shadow: 0px 16px 32px rgba(0, 0, 0, 1); /* Sombra mais densa ao passar o mouse */
+   transform: scale(1.05); /* Pequeno aumento para dar efeito de destaque */
+  /*  border: 2px solid rgba(255, 255, 255, 0.5); /* Borda clara opcional para destacar mais */
+}
+
+
+
+#diceWindow {
+    width: 100px;
+    height: 100px;
+    background-color: lightgrey;
+    border: 2px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    cursor: move;
+    user-select: none;
+    transform-origin: 50% 50%; /* Define o ponto de origem da transformação para o centro */
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Popup reutilizado para todas as mini popups .... aquelas de fundo branco usado para subopções! */
+.dice-face-popup {
+    position: fixed; /*testando entre fixed (popup acompanha o subir ou descer do scroll da pagina) e o normalmente usado absolute (popup fica fixo na tela, e não acompanha o scroll da pagina!)*/
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 8px;
+    background-color: white;
+    border: 1px solid black;
+    z-index: 100000000000000;
+    text-align: center;
+    
+    /* Usando grid para criar duas colunas */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);  /* 2 colunas de largura igual */
+    gap: 4px;  /* Espaçamento entre os botões */
+    justify-items: center;  /* Centraliza os itens horizontalmente dentro de cada célula */
+}
+
+/* Estilo dos botões */
+.dice-face-popup button {
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    width: 100%;  /* Faz com que os botões ocupem toda a largura da célula */
+}
+
+/* Hover nos botões */
+.dice-face-popup button:hover {
+    background-color: #f0f0f0;
+}
+
+/* Último botão (vermelho) */
+.dice-face-popup button:last-child {
+    background-color: red;
+    color: white;
+    margin-top: 10px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Definindo a animação de rotação do dado */
+.flip-animation {
+    animation: rollDice 2s linear;
+}
+
+/* A animação de rotação do dado simulando o rolar físico */
+@keyframes rollDice {
+    0% {
+        transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); /* Começa sem rotação */
+    }
+    25% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); /* Giro rápido no 1º quarto da animação */
+    }
+ 45% {
+        transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); /* Giro rápido no 1º quarto da animação */
+    }
+ 
+    }
+  
+   
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+ /* Ajuste automático para dispositivos móveis */
+    @media (max-width: 600px) {
+        #backupText {
+            width: 100%;
+            font-size: 14px;
+        }
+      
+    }
+
+
+
+
+
+/* ==========================================
+   BARRA LATERAL - EXPERIMENTO: 1 COLUNA (CONTEÚDO AO LADO)
+   ========================================== */
+
+.left-column {
+    width: 380px; /* Mantido o tamanho confortável para o formato de linha */
+    min-width: 380px;
+    height: 100vh;
+    background-color: #121214;
+    border-right: 1px solid #27272a;
+    padding: 15px 10px;
+    z-index: 1000;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Customização da Barra de Rolagem */
+.left-column::-webkit-scrollbar { width: 6px; }
+.left-column::-webkit-scrollbar-track { background: #121214; }
+.left-column::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+.left-column::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+/* Bloco da Divisão Retrátil (Accordion) */
+details.sidebar-section {
+    margin-bottom: 12px;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    background-color: #18181b;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+    width: 100%;
+}
+details.sidebar-section[open] {
+    border-color: #3f3f46;
+}
+
+/* Cabeçalho Clicável da Divisão */
+summary.sidebar-section-title {
+    color: #a1a1aa;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 14px;
+    background-color: #1c1c1f;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+summary.sidebar-section-title::-webkit-details-marker {
+    display: none;
+}
+
+/* Seta Customizada Moderna */
+summary.sidebar-section-title::after {
+    content: '➔';
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+    color: #71717a;
+}
+details[open] summary.sidebar-section-title::after {
+    transform: rotate(90deg);
+    color: #e4e4e7;
+}
+
+/* ALTERADO: Grid principal agora é estritamente de 1 coluna */
+.decks-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Apenas uma coluna maximizada */
+    gap: 12px;
+    padding: 12px;
+    background-color: #121214;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* ALTERADO: Ajuste do contêiner para conter o conteúdo sem vazar */
+.deck {
+    background-color: #1c1c1f;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 85px 1fr; /* Define um tamanho fixo seguro para a imagem e o resto para os textos/botões */
+    column-gap: 12px;                 /* Espaço horizontal entre a imagem e o conteúdo */
+    row-gap: 6px;                     /* Espaço vertical interno */
+    align-items: center;
+    text-align: left;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;                 /* Garante que nada saia do limite do card */
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.deck:hover {
+    border-color: #4b5563;
+    transform: translateX(3px);
+}
+
+/* ALTERADO: Tamanho da imagem otimizado para o layout de 1 coluna */
+.deck .deck-back {
+    grid-row: span 2;    /* Mantém a imagem ocupando a altura total da esquerda */
+    width: 100%;
+    max-width: 85px;     /* Largura máxima controlada para não esmagar a direita */
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+    cursor: pointer;
+}
+
+.deck p {
+    color: #e4e4e7;
+    font-size: 0.75rem; /* Diminuído ligeiramente no PC para caber palavras grandes */
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+    
+    /* FORÇA FICAR EM UMA LINHA SÓ SEM QUEBRAR: */
+    white-space: nowrap;       /* Garante que o texto fique estritamente em uma única linha */
+    overflow: hidden;          /* Corta qualquer sobra invisível por segurança */
+    text-overflow: ellipsis;   /* Se a palavra for um "palavrão" gigante, exibe ... no final */
+}
+
+/* RESOLUÇÃO DO CORTE: Mudado de 'row' para 'column' */
+.deck-controls {
+    display: flex;
+    flex-direction: column; /* Força os botões a ficarem empilhados verticalmente, eliminando o corte horizontal! */
+    gap: 5px;               /* Espaçamento entre um botão e outro */
+    width: 100%;
+}
+
+.deck button {
+    background-color: #27272a;
+    color: #f4f4f5;
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    padding: 5px 8px;       /* Ajuste de preenchimento para cliques confortáveis */
+    font-size: 0.75rem;
+    cursor: pointer;
+    width: 100%;            /* Ocupa toda a largura disponível da coluna direita */
+    box-sizing: border-box;
+}
+.deck button:hover {
+    background-color: #3f3f46;
+}
+
+/* Botões de Ação Inteiros */
+.sidebar-action-btn {
+    width: 100%;
+    background-color: #722f37;
+    color: white;
+    border: 1px solid #9a3b46;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+/* Grid específico para botões de ação lado a lado (PC) */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas no computador */
+    gap: 8px; 
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.actions-grid .sidebar-action-btn {
+    margin-bottom: 0; 
+    font-size: 0.75rem; 
+    padding: 10px 4px; 
+    text-align: center;
+}
+
+/* ==========================================
+   Ajuste Responsivo para Celulares (Mobile)
+   ========================================== */
+@media (max-width: 768px) {
+    .left-column {
+        width: 300px; /* Largura segura para a barra no celular */
+        min-width: 300px;
+    }
+    body.sidebar-hidden .left-column {
+        margin-left: -300px; /* Sincronizado com a largura acima */
+    }
+    .decks-grid {
+        grid-template-columns: 1fr; /* Mantém 1 coluna de cards */
+        padding: 8px;
+        gap: 10px;
+    }
+    .deck p {
+        font-size: 0.68rem; /* Fonte um pouco menor no celular para compensar a tela estreita */
+    }
+    
+   /* CORREÇÃO VISUAL PARA "DOCUMENTOS E MANUAIS" NO TELEMÓVEL: */
+    .actions-grid {
+        grid-template-columns: 1fr; /* Passa para 1 coluna no telemóvel, eliminando o corte! */
+        gap: 8px; 
+        padding: 8px 12px;
+    }
+
+    .actions-grid .sidebar-action-btn {
+        font-size: 0.8rem; /* Como agora tem a largura total da barra, a letra pode ficar maior e mais legível! */
+        padding: 11px 6px;  /* Botão ligeiramente maior para facilitar o toque com o dedo */
+    } 
+    
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Efeito de carregamento: o dado gira e fica embaçado ao mesmo tempo */
+.loading-dice {
+    filter: blur(4px); 
+    opacity: 0.8;
+    pointer-events: none; /* Evita cliques extras enquanto carrega */
+    transition: filter 0.3s ease; /* Suaviza a volta da nitidez */
+}
+
+
+
+
+/* 1. Remove qualquer fundo padrão que o navegador tente colocar */
+/*.card-container, .card {
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    -webkit-backface-visibility: hidden; /* Evita reflexos brancos em animações */
+   /* backface-visibility: hidden;
+}
+
+/* 2. Garante que imagens ainda não carregadas fiquem invisíveis */
+img:not([src]), img[src=""] {
+    visibility: hidden;
+}
+
+/* 3. Estilo para o nascimento suave da carta (Fade-in) */
+.card-nascent {
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+
+.card-ready {
+    opacity: 1 !important;
+}
+
+/* 4. Remove o brilho de seleção (aquele quadro azul/branco ao clicar rápido) */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+
+
+
+
+
+/*______________________________________________________________________________________________________*/
+
+.note {
+    /* ... suas configurações existentes ... */
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    
+    /* ESSENCIAL: Impede que o navegador tente arrastar o "bloco de texto" */
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+}
+
+/* Impede que imagens ou spans dentro da nota sejam arrastáveis individualmente */
+.note * {
+    -webkit-user-drag: none !important;
+    user-drag: none !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================
+   BARRA SUPERIOR DE FERRAMENTAS (SCROLL)
+   ========================================= */
+#top-menu-bar {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+   
+   /* width: min(95vw, 600px);*/
+   width: 95vw;
+   
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(5px);
+    border: 1px solid white;
+    border-radius: 10px;
+    z-index: 1000000;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 0 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    
+    /* ADICIONE ISSO PARA GARANTIR O FLUXO */
+    flex-wrap: nowrap; 
+}
+
+/* Esconde a barra de rolagem no Chrome/Safari */
+#top-menu-bar::-webkit-scrollbar {
+    display: none;
+}
+
+
+
+/* Seus botões agora devem usar esta classe ou seletor */
+#top-menu-bar button {
+    /* Aparência igual aos outros */
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+
+    /* A SOLUÇÃO PARA O DESLIZE: */
+    flex-shrink: 0;      /* Impede o botão de diminuir de tamanho */
+    touch-action: pan-x; /* Permite que o arrasto horizontal passe pelo botão */
+    user-select: none;   /* Evita selecionar texto ao arrastar */
+}
+
+/* Efeito de Hover (Deslize visual) igual para todos */
+#top-menu-bar button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: white;
+    transform: translateY(-1px);
+}
+
+
+
+
+
+
+
+
+/* Ajuste específico para o botão da lousa */
+#btn-toggle-lousa {
+    transition: background-color 0.3s, color 0.3s;
+}
+
+
+
+
+
+
+
+
+
+
+/* Configuração limpa das barras */
+#top-menu-bar, .card-options, #card-options2 {
+    display: flex !important;
+    overflow-x: auto !important; 
+    white-space: nowrap !important;
+    scrollbar-width: none; /* Esconde a barra feia no Firefox */
+    -webkit-overflow-scrolling: touch; /* Devolve a rolagem suave nativa para o celular! */
+    cursor: grab;
+}
+
+#top-menu-bar::-webkit-scrollbar, 
+.card-options::-webkit-scrollbar, 
+#card-options2::-webkit-scrollbar {
+    display: none; /* Esconde a barra feia no Chrome/Safari */
+}
+
+/* Garante que os botões não encolham e bloqueia o arrasto fantasma no PC */
+#top-menu-bar button, .card-options button, #card-options2 button,
+#top-menu-bar img, .card-options img {
+    flex-shrink: 0 !important;
+    -webkit-user-drag: none !important; /* Salvação para o PC */
+    user-drag: none !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* O ícone da bandeira anexado à nota */
+.nota-bandeira {
+    position: absolute;
+    top: -10px; /* Ajuste para ficar um pouco para fora da nota */
+    right: -10px;
+    width: 30px;
+    height: 30px;
+    background-color: #f1c40f; /* Uma cor de destaque, ou transparente se usar PNG */
+    border: 2px solid #333;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 100; /* Garante que fique acima do conteúdo da nota */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    user-select: none; /* Evita selecionar o texto ao dar duplo clique */
+}
+
+/* Classe que será alternada (toggle) para ocultar a nota */
+.nota-oculta {
+    /* Retira fundo, borda e reduz o tamanho a quase zero */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    resize: none !important;
+}
+
+/* Oculta os elementos internos da nota (texto, controles), EXCETO a bandeira */
+.nota-oculta > *:not(.nota-bandeira) {
+    display: none !important;
+}
+
+/* Reposiciona a bandeira para o centro geométrico do ponto quando a nota estiver oculta */
+.nota-oculta .nota-bandeira {
+    top: -15px; 
+    right: -15px;
+}

@@ -1,0 +1,4887 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+ <head>
+
+
+<script>
+    // VERSAO 30.3abc - Liguagem simples para programação de formulas e criação de constantes feita 
+    // VERSAO 20-28.0 - AJUSTES NA POPUP DE REGRAS e botão setup
+    // VERSAO 19 - ajustes daveve load regras
+    // VERSAO 12/Mar/2026 - Ajuste gerais e novos implementos especialmente na aba combate
+    // VERSAO 04/Mar/2026 - muito ajustes, agora teclas das setas funcionam nos textos do post-it e notas!
+    // VERSAO 17/Mar/2026 - ALERTS agora substituidos por TOASTs
+    // VERSAO 10/Mar/2026 - aumentando a quantidade de undos e redos possiveis
+    // VERSAO 22/Abr/2026 - undo e redo sincronizado com regua
+    // VERSAO 18/Abr/2026 - teclado agora ativa os carimbos se barra aberta!
+    // VERSAO 06/Abr/2026 - Otimizaçoes feitas para economia da cpu
+    // VERSAO 05/Abr/2026 - Agora usando o CTRL+ e CTRL- para redimensinar a mesa!
+    // VERSAO 30/Mar/2026 - Correção dos botoes UNDO e REDO na barra superior
+    </script>
+
+<script>
+// ==========================================
+// ARRASTE HORIZONTAL (APENAS PARA MOUSE NO PC)
+// O celular usará o scroll nativo perfeito via CSS
+// ==========================================
+(function() {
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    let activeBar = null;
+    let hasDragged = false;
+
+    // 1. Quando clica
+    document.addEventListener('pointerdown', (e) => {
+        // SE NÃO FOR MOUSE (ou seja, for touch no celular), ABORTA O SCRIPT!
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+
+        const bar = e.target.closest('#top-menu-bar, .card-options, #card-options2, #lousa-stamp-scroll');
+        if (!bar) return;
+
+        isDown = true;
+        hasDragged = false;
+        activeBar = bar;
+        activeBar.style.cursor = 'grabbing';
+        
+        startX = e.pageX - activeBar.offsetLeft;
+        scrollLeft = activeBar.scrollLeft;
+    });
+
+    // 2. Quando move o mouse
+    document.addEventListener('pointermove', (e) => {
+        if (!isDown || !activeBar || e.pointerType !== 'mouse') return;
+
+        const x = e.pageX - activeBar.offsetLeft;
+        const walk = (x - startX) * 1.5; // Velocidade do deslize
+        
+        // Se moveu mais de 5 pixels, considera um arraste
+        if (Math.abs(walk) > 5) {
+            hasDragged = true;
+            e.preventDefault(); // Impede de selecionar texto sem querer
+            activeBar.scrollLeft = scrollLeft - walk;
+        }
+    });
+
+    // 3. Quando solta o botão do mouse
+    document.addEventListener('pointerup', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        
+        isDown = false;
+        if (activeBar) {
+            activeBar.style.cursor = 'grab';
+            activeBar = null;
+        }
+    });
+
+    // 4. Bloqueia o clique no botão SE acabou de arrastar com o mouse
+    document.addEventListener('click', (e) => {
+        if (hasDragged) {
+            const bar = e.target.closest('#top-menu-bar, .card-options, #card-options2, #lousa-stamp-scroll');
+            if (bar) {
+                e.preventDefault();
+                e.stopPropagation();
+                hasDragged = false; // Reseta para o próximo clique funcionar
+            }
+        }
+    }, true);
+
+    // 5. Impede o "Drag Fantasma" de imagens no PC
+    document.addEventListener('dragstart', (e) => {
+        if (e.target.closest('#top-menu-bar, .card-options, #card-options2')) {
+            e.preventDefault();
+        }
+    });
+})();
+</script>
+
+
+
+
+    
+
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <meta name="game-id" content="spider_hunt"> <!-- Identificador único da página -->
+
+    <title>Spider Hunt</title>
+    <link rel="stylesheet" href="styles.css">
+
+
+
+
+
+
+<style>
+    /* Garante que os botões não encolham e permitam o arraste horizontal */
+#top-menu-bar button, 
+#undo-button, 
+#redo-button {
+    flex-shrink: 0;      /* Impede o botão de diminuir */
+    touch-action: pan-x; /* Permite que o arrasto horizontal passe pelo botão sem clicar */
+    user-select: none;   /* Evita seleção de texto indesejada */
+    white-space: nowrap;
+}
+
+
+/* Efeito de desfoque para popups em carregamento */
+.popup-loading {
+    filter: blur(10px);
+    pointer-events: none; /* Impede cliques e arrastes enquanto desfocado */
+    transition: filter 0.5s ease; /* Transição suave quando o blur sair */
+}
+
+
+
+    /* Estilo da janela flutuante */
+        #janelaFlutuante {
+            width: 100%;
+            max-height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+    background-color: rgba(255, 255, 255, 0.9); /* Branco com 90% de opacidade */
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+            z-index:999999999999999999999999999999999999999999999999898987999999;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+
+
+
+
+#resizeHandle {
+    width: 10px; /* Largura da área de redimensionamento */
+    height: 100%; /* Altura total da janela */
+    background: #ccc; /* Cor da área de redimensionamento */
+    position: absolute;
+    right: 0; /* Posiciona à direita */
+    top: 0; /* Inicia no topo */
+    cursor: ew-resize; /* Cursor de redimensionamento horizontal */
+}
+
+
+
+
+
+
+
+
+
+
+        #janelaFlutuante.minimizado {
+            height: 40px; /* Altura para o modo minimizado */
+            overflow: hidden;
+        }
+
+        #janelaFlutuante.aberto {
+            transform: translateY(0); /* Exibe a janela deslizando para baixo */
+      }
+
+        #barraTitulo {
+            padding: 5px;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            user-select: none;
+            cursor: grab;
+        }
+
+        .botao {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        /* Estilo do conteúdo da página */
+        .content {
+            padding: 20px;
+        }
+
+
+
+
+
+
+
+
+
+/* ==========================================
+   ESTILIZAÇÃO DA COLUNA RETRÁTIL E MESA
+   ========================================== */
+
+/* Contêiner principal com Flexbox para "empurrar" naturalmente */
+.layout-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Coluna da esquerda (aba retrátil) */
+.left-column {
+    width: 250px;
+    min-width: 250px; /* Impede a aba de ser esmagada */
+    height: 88vh;
+    background-color: black; /* Cor sólida IDÊNTICA ao carregamento inicial, sem transparência! */
+    padding: 10px;
+    z-index: 1000;
+    transition: margin-left 0.3s ease-in-out;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Mesa virtual (coluna direita) */
+.right-column {
+    flex-grow: 1; /* Faz a mesa ocupar o espaço restante automaticamente */
+    height: 100vh;
+    position: relative;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+/* Quando a aba é recolhida, aplicamos margem negativa para escondê-la */
+body.sidebar-hidden .left-column {
+    margin-left: -250px;
+}
+
+/* Botão retrátil como aba lateral */
+.toggle-sidebar {
+    position: fixed;
+    left: 0; /* Fica sempre fixo na borda esquerda */
+    top: 50%;
+    transform: translateY(-50%);
+    background: #333; /* Volta para o cinza original */
+    color: white;
+    border: none;
+    padding: 12px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 0 10px 10px 0;
+    z-index: 1100;
+    writing-mode: vertical-rl;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent; /* Evita piscar no telemóvel */
+}
+
+/* Efeito ao passar o mouse ou tocar */
+.toggle-sidebar:hover, 
+.toggle-sidebar:active {
+    background: #555; /* Cinza mais claro */
+}
+
+/* 📱 Ajustes para telas menores (celular) */
+@media (max-width: 768px) {
+    .left-column {
+        width: 150px;
+        min-width: 150px;
+        padding: 5px;
+    }
+
+    /* Margem de recolhimento adaptada ao tamanho do celular */
+    body.sidebar-hidden .left-column {
+        margin-left: -150px;
+    }
+
+    .toggle-sidebar {
+        /* Aumenta o botão no telemóvel para facilitar o toque, mas mantém fixo à esquerda */
+        padding: 20px 14px;
+        font-size: 20px;
+    }
+
+    .deck img {
+        width: 70%;
+    }
+
+    .deck {
+        width: 100%;
+        display: block;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+  /*FAz os decks dinamicos sumirem já que não estou conseguindo que funcionem direito*/
+ #decks_dinamicos {
+      display: none;
+    } 
+/*FAz o botão ficar invisivel do SETUP EMBARALHAR*/
+ #shuffle-button{
+      display: none;
+    } 
+
+
+
+
+
+
+
+
+
+
+
+/*IMPORTANTE: USAR SOMENTE SE NÂO HOUVER 2° SETUP!FAz o botão ficar invisivel do setup2-btn*/ 
+#setup2-btn{
+     display: none; 
+    } 
+/*IMPORTANTE: USAR SOMENTE SE NÂO HOUVER 1° SETUP!FAz o botão ficar invisivel do setup2-btn*/ 
+#setup-btn{
+     display: none; 
+    } 
+
+
+
+
+
+
+
+
+
+
+
+ /* Estilo do botão principal */
+.main-button {
+    padding: 5px 7px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: grey;
+    color: white;
+    border: 2px solid white;
+    border-radius: 5px;
+    display: inline-block;
+    margin: 0;
+    text-align: center;
+}
+
+/* Estilo do menu dropdown */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Estilo da lista oculta */
+.dropdown-content {
+    display: none;
+    background-color: white;
+    width: auto;
+    max-width: 90%;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 10px;
+    z-index: 1000;
+}
+
+/* Estilo dos itens da lista */
+.audio-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+/* Cores personalizáveis dos itens */
+.white-bg {
+    background-color: white;
+}
+
+.light-gray-bg {
+    background-color: #f0f0f0;
+}
+
+.dark-gray-bg {
+    background-color: #d3d3d3;
+}
+
+/* Estilo do nome do áudio */
+.audio-item span {
+    color: black;
+    font-size: 16px;
+    margin-top: 5px;
+    flex: 1;
+    text-align: center;
+}
+
+/* Estilo do botão Play/Pause */
+.play-button {
+    background-color: #28a745;
+    color: white;
+    padding: 5px 8px;adicionarssssssss
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+/* Hover no botão Play/Pause */
+.play-button:hover {
+    background-color: #218838;
+}
+
+/* Estilos de visibilidade do menu */
+.dropdown-content.show {
+    display: block;
+}
+
+
+
+
+
+
+
+/* Painel Lateral Principal - Totalmente isolado do fluxo do site */
+.inspector-drawer {
+    position: fixed !important; /* Força a saída total do fluxo do documento */
+    top: 0 !important;
+    right: -320px; 
+    width: 320px;
+    height: 100vh !important;
+    margin: 0 !important;      /* Impede que margens globais desloquem seu site */
+    padding: 20px !important;
+    display: flex !important;  /* Usa flexbox para estruturar o topo fixo e a rolagem embaixo */
+    flex-direction: column !important;
+    float: none !important;
+    
+    background-color: #141419;
+    color: #e0e0e0;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.7);
+    transition: right 0.3s ease-in-out;
+    z-index: 99999 !important; /* Fica por cima de absolutamente tudo */
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+.inspector-drawer.active {
+    right: 0 !important;
+}
+
+/* Aba Puxável (Fixada na borda do painel, também isolada) */
+.drawer-tab {
+    position: absolute !important;
+    left: -45px !important; 
+    top: 150px !important; 
+    width: 45px;
+    height: 50px;
+    background-color: #722f37;
+    color: white;
+    border-radius: 8px 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    box-shadow: -3px 2px 10px rgba(0, 0, 0, 0.5);
+    transition: background 0.2s;
+    user-select: none;
+}
+.drawer-tab:hover { background-color: #9a3b46; }
+
+/* Cabeçalho */
+.inspector-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 2px solid #27272a;
+    padding-bottom: 12px !important;
+    margin-bottom: 15px !important;
+}
+.inspector-header h2 { 
+    margin: 0 !important; 
+    font-size: 1.2rem !important; 
+    color: #f43f5e !important; 
+    font-weight: bold; 
+}
+.close-btn { 
+    background: none !important; 
+    border: none !important; 
+    color: #71717a; 
+    cursor: pointer; 
+    font-size: 1.2rem; 
+}
+
+/* --- ALINHAMENTO HORIZONTAL: Vida (HP) - [ - | 100 | + ] --- */
+.inspector-drawer .stat-row {
+    display: flex !important;
+    flex-direction: row !important; /* Garante que fiquem na mesma linha */
+    justify-content: space-between !important; /* Nome na esquerda, botões na direita */
+    align-items: center !important;
+    margin-bottom: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+.inspector-drawer .stat-label { 
+    font-size: 0.85rem !important; 
+    color: #a1a1aa !important; 
+    font-weight: 500 !important;
+    white-space: nowrap !important; /* Impede que o texto quebre em duas linhas */
+    margin-right: 10px !important;
+}
+
+/* Controladores Numéricos */
+.inspector-drawer .counter-control {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    background-color: #121216 !important;
+    border-radius: 6px !important;
+    border: 1px solid #3f3f46 !important;
+    overflow: hidden !important;
+    height: 28px !important; /* Altura compacta */
+}
+.inspector-drawer .counter-control button {
+    background-color: #27272a !important;
+    color: #fff !important;
+    border: none !important;
+    width: 30px !important;
+    height: 100% !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important; 
+    margin: 0 !important;
+    transition: background 0.1s, color 0.1s !important;
+}
+.inspector-drawer .counter-control button:hover { background-color: #3f3f46 !important; }
+.inspector-drawer .counter-control .btn-plus:hover { color: #22c55e !important; }
+.inspector-drawer .counter-control .btn-minus:hover { color: #ef4444 !important; }
+
+.inspector-drawer .display-value {
+    min-width: 55px !important;
+    text-align: center !important;
+    font-weight: bold !important;
+    font-size: 0.85rem !important;
+    color: #ffffff !important;
+    font-family: monospace !important;
+    padding: 0 4px !important;
+}
+
+/* Área de texto para anotações */
+.notes-area {
+    width: 100%;
+    background-color: #1a1a22;
+    color: #e0e0e0;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 12px;
+    resize: vertical; /* Permite ao usuário puxar a altura do texto */
+    min-height: 60px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.85rem;
+}
+.notes-area:focus { outline: 1px solid #f43f5e; }
+
+/* Botão Flutuante Compacto posicionado logo abaixo do Herói */
+.btn-add-enemy {
+    position: absolute !important;
+    top: 355px !important; /* Posiciona ele flutuando logo abaixo da área de texto do herói */
+    right: 25px !important; /* Alinhado no canto direito do painel */
+    width: 45px !important;
+    height: 45px !important;
+    border-radius: 50% !important; /* Mantém o formato redondo de ícone flutuante */
+    background-color: #10b981 !important; /* Verde RPG */
+    color: white !important;
+    border: none !important;
+    font-size: 1.5rem !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+    z-index: 100001 !important; /* Garante que ele flutue ACIMA dos cards dos inimigos que estão rolando */
+    transition: transform 0.2s, background-color 0.2s;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.btn-add-enemy:hover {
+    background-color: #059669 !important;
+    transform: scale(1.05);
+}
+
+.btn-add-enemy:active {
+    transform: scale(0.95);
+}
+
+/* Container com Rolagem para os Inimigos */
+.enemies-scroll-area {
+    flex:
+
+    
+    </style>
+</head>
+
+
+
+
+
+
+
+<body>
+    
+
+<div id="top-menu-bar" class="integrated-menu">
+    
+<!-- MOEDA ESTILIZADA -->
+
+<button id="moedas" style="
+    width: 38px; /* Largura fixa para manter o formato circular */
+    height: 38px; /* Altura fixa para manter o formato circular */
+    background-color: #FFD700; /* Cor dourada */
+    background-image: linear-gradient(45deg, #FFD700, #FFC107, #FFB300);
+    color: black;
+    border: 2px solid black; /* Borda interna preta */
+    border-radius: 50%; /* Torna o botão circular */
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-flex; /* Permite que fique ao lado de outros elementos */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    vertical-align: middle; /* Alinhamento vertical */
+    margin: 5px; /* Espaço ao redor do botão */
+    /* Bordas simuladas com sombra para criar camadas */
+    box-shadow: 
+        0px 0px 0px 2px #FFD700,   /* Borda dourada externa */
+        0px 0px 0px 4px black;      /* Borda preta externa */
+">
+    0 $
+</button>
+    <button onclick="adjustZoom('increase')">🔍 Zoom +</button>
+    <button onclick="adjustZoom('decrease')">🔍 Zoom -</button>
+    
+    <button onclick="toggleJanela()">📜 Regras/Documentos</button>
+    <button id="create-note-btn"  style="border: 2px solid white; background-color: darkred; ">Criar Notas</button>
+ 
+<button onclick="triggerNotePopup(event)"  style="border: 2px solid yellow; background-color: darkorange; ">Adicionar POST-IT</button>
+
+
+  <!--  <button onclick="openPopupNote()">📝 Notas</button> -->
+    
+    <button onclick="limparTodosOsRastreios()">🧹 Limpar Rastros</button>
+    
+     <button id="undo-button"><< UNDO</button>
+     
+    <button id="redo-button">REDO >></button>
+    
+    <button id="salvar1111" onclick="saveFullPage(); salvarTexto();" 
+        style="border: 2px solid red; padding: 5px 10px; background-color: transparent; color: white;">
+    Salvar Jogo
+</button>
+    
+    <button id="btn-toggle-lousa" onclick="alternarLousaGlobal()">✏️ Lousa: OFF</button>
+</div>
+
+
+
+<!-- Adiciona o botão de ocultação da coluna a esquerda -->
+<button class="toggle-sidebar" id="toggleSidebar">☰</button> 
+
+
+
+<div id="janelaFlutuante">
+    <div id="barraTitulo">
+        <span>Regras, Anotações e Vídeos!</span>
+        <button class="botao" id="botaoMinimizar">−</button>
+    </div>
+    <iframe src="dados.html" title="Janela Conteúdo" style="width: 100%; height: calc(100vh - 40px); border: none;"></iframe>
+    <div id="resizeHandle"></div> <!-- Adiciona um elemento para redimensionamento -->
+
+</div>
+
+
+
+<script>
+// Função para alternar a visibilidade da janela
+function toggleJanela() {
+    const janelaFlutuante = document.getElementById("janelaFlutuante");
+    
+    if (janelaFlutuante.style.display === 'none' || janelaFlutuante.style.display === '') {
+        janelaFlutuante.style.display = 'block'; // Mostra a janela
+        janelaFlutuante.classList.add("aberto"); // Adiciona a classe para a animação
+    } else {
+        janelaFlutuante.style.display = 'none'; // Oculta a janela
+        janelaFlutuante.classList.remove("aberto"); // Remove a classe da animação
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const janelaFlutuante = document.getElementById("janelaFlutuante");
+    const botaoMinimizar = document.getElementById("botaoMinimizar");
+    const resizeHandle = document.getElementById("resizeHandle");
+
+    let isResizing = false;
+
+    // Alternar minimizar/restaurar
+    botaoMinimizar.addEventListener("click", () => {
+        if (janelaFlutuante.classList.contains("aberto")) {
+            janelaFlutuante.classList.remove("aberto");
+        } else {
+            janelaFlutuante.classList.add("aberto");
+        }
+    });
+
+    // Redimensionamento da janela
+    resizeHandle.addEventListener("mousedown", (e) => {
+        isResizing = true;
+        e.preventDefault(); // Evita a seleção de texto
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (isResizing) {
+            const newWidth = e.clientX - janelaFlutuante.getBoundingClientRect().left; // Nova largura
+            const newHeight = e.clientY - janelaFlutuante.getBoundingClientRect().top; // Nova altura
+            if (newWidth > 100) { // Largura mínima
+                janelaFlutuante.style.width = `${newWidth}px`;
+            }
+            if (newHeight > 100) { // Altura mínima
+                janelaFlutuante.style.height = `${newHeight}px`;
+            }
+        }
+    });
+
+    document.addEventListener("mouseup", () => {
+        isResizing = false;
+    });
+});
+</script>
+
+
+
+
+    <script>
+        // Função para exibir a confirmação de saída da página
+        window.onbeforeunload = function() {
+            return "Tem certeza que deseja sair ou recarregar a página? Alterações podem ser perdidas.";
+        };
+
+        // Desativar arrastar imagens no documento
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        });
+      </script>
+
+
+
+
+<script>
+//bloquei o uso do botão direito do mouse dentro da area da mesa virtual!
+    // Espera a página carregar completamente
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seleciona a área específica onde o botão direito será desabilitado
+        var tableArea = document.getElementById('table-area');
+        
+        // Adiciona o evento 'contextmenu' para bloquear o clique direito
+        tableArea.addEventListener('contextmenu', function(event) {
+            event.preventDefault();  // Impede o menu de contexto de abrir
+           // alert("O botão direito está desabilitado nesta área.");
+        });
+    });
+</script>
+
+
+
+
+
+</head>
+
+   
+
+
+
+
+
+
+
+
+<div class="fixed-buttons">
+    <b>Spider Hunt</b>
+    
+    <span style="position: fixed; right: 25px; top: 5px; font-size: 0.8em; font-weight: normal; opacity: 0.8;">
+        Versão: <span id="versao-mesa-display"></span>
+    </span>
+    
+    <br><br><br><br>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Contêiner para as colunas (decks à esquerda, mesa à direita) -->
+    <div class="layout-container">
+        <!-- Coluna da esquerda (decks) -->
+        <div class="left-column">
+            <div class="decks-container">
+                <!-- Decks na coluna esquerda -->
+
+
+
+
+
+
+   
+
+                
+               
+                    
+               
+ 
+
+<div id="decks_dinamicos" style="">  </div>
+
+
+
+ <!-- Botão principal para abrir a cascata
+<div class="dropdown">
+    <button class="main-button" onclick="toggleDropdown()">👉 Clique aqui [Áudios]</button>
+    <div class="dropdown-content" id="audioDropdown"></div>
+</div> -->
+
+<script>
+    // Lista de áudios com caminho correto
+    var audios = [
+        { nome: "<b>FILHOS DE TIFÃO</b> <br><br>Detalhes da Operação", arquivo: "Filhos de Tifão - Detalhes da Operação.mp3", corFundo: "white-bg" },
+        { nome: "Filhos de Tifão - Ato 1 - Travessia do Rio - Registro de Abe", arquivo: "Filhos de Tifão - Ato 1 - Travessia do Rio - Registro de Abe.mp3", corFundo: "white-bg" },
+        { nome: "Filhos de Tifão - Ato 1 - Travessia do Rio - Relatório pós ação", arquivo: "Filhos de Tifão - Ato 1 - Travessia do Rio - Relatório pos ação.mp3", corFundo: "white-bg" },
+        { nome: "Filhos de Tifão - Ato 2 - Reconhecimento da Aldeia - Registro de Abe", arquivo: "Filhos de Tifão - Ato 2 - Reconhecimento da Aldeia - Registro de Abe.mp3", corFundo: "white-bg" },
+        { nome: "Filhos de Tifão - Ato 2 - Reconhecimento da Aldeia - Relatório pós Ação", arquivo: "Filhos de Tifão - Ato 2 - Reconhecimento da Aldeia - Relatório pós Ação.mp3", corFundo: "white-bg" },
+        { nome: "Filhos de Tifão - Ato 3 - Incursão à Mina - Registro de Abe", arquivo: "Filhos de Tifão - Ato 3 - Incursão à Mina - Registro de Abe.mp3", corFundo: "white-bg" },
+        { nome: "Filhos de Tifão - Ato 3 - Incursão à Mina - Relatório pós Missão", arquivo: "Filhos de Tifão - Ato 3 - Incursão à Mina - Relatório pós Missão.mp3", corFundo: "white-bg" },
+        { nome: "<b>AMOR DE MÃE</b> <br><br>Detalhes da Operação", arquivo: "Amor de MÆe - Detalhes da OperaÆo.mp3", corFundo: "light-gray-bg" },
+        { nome: "Amor de Mãe - Ato 1 - Traição - Registro de Abe", arquivo: "Amor de MÆe - Ato 1 - TraiÆo - Registro de Abe.mp3", corFundo: "light-gray-bg" },
+        { nome: "Amor de Mãe - Ato 1 - Traição - Relatório pós Ação", arquivo: "Amor de MÆe - Ato 1 - TraiÆo - Relat¢rio p¢s AÆo.mp3", corFundo: "light-gray-bg" },
+        { nome: "Amor de Mãe - Ato 2 - Biotério - Registro de Abe", arquivo: "Amor de MÆe - Ato 2 - Biotrio - Registro de Abe.mp3", corFundo: "light-gray-bg" },
+        { nome: "Amor de Mãe - Ato 2 - Biotério - Relatório pós Ação", arquivo: "Amor de MÆe - Ato 2 - Biotrio - Relat¢rio p¢s AÆo.mp3", corFundo: "light-gray-bg" },
+        { nome: "Amor de Mãe - Ato 3 - Projenitora do Infinito - Registro de Abe", arquivo: "Amor de MÆe - Ato 3 - Projenitora do Infinito - Registro de Abe.mp3", corFundo: "light-gray-bg" },
+        { nome: "Amor de Mãe - Ato 3 - Projenitora do Infinito - Relatório pós Ação", arquivo: "Amor de MÆe - Ato 3 - Projenitora do Infinito - Relat¢rio p¢s AÆo.mp3", corFundo: "light-gray-bg" },
+        { nome: "<b>TURNO DA NOITE</b> <br><br>Detalhes da Operação", arquivo: "Turno da Noite - Detalhes da OperaÆo .mp3", corFundo: "white-bg" },
+        { nome: "Turno da Noite - Ato 1 - A Revelação", arquivo: "Turno da Noite - Ato 1 - A RevelaÆo.mp3", corFundo: "white-bg" },
+        { nome: "Turno da Noite - Ato 1 - A Revelaçãoo - Relatório pós Ação", arquivo: "Turno da Noite - Ato 1 - A RevelaÆo - Relat¢rio p¢s AÆo.mp3", corFundo: "white-bg" },
+        { nome: "Turno da Noite - Ato 2 - Porta de Entrada - Registro Abe", arquivo: "Turno da Noite - Ato 2 - Porta de Entrada - Registro Abe.mp3", corFundo: "white-bg" },
+        { nome: "Turno da Noite - Ato 2 - Porta de Entrada - Relatório pós Ação", arquivo: "Turno da Noite - Ato 2 - Porta de Entrada - Relat¢rio p¢s AÆo.mp3", corFundo: "white-bg" },
+        { nome: "Turno da Noite - Ato 3 - Lua Azul - Registro Abe", arquivo: "Turno da Noite - Ato 3 - Lua Azul - Registro Abe.mp3", corFundo: "white-bg" },
+        { nome: "Turno da Noite - Ato 3 - Lua Azul - Relatório pós Ação", arquivo: "Turno da Noite - Ato 3 - Lua Azul - Relat¢rio p¢s aÆo.mp3", corFundo: "white-bg" }
+    ];
+
+    var dropdown = document.getElementById("audioDropdown");
+    var audioElements = {}; // Armazena os players para controle
+
+    // Criar botões para cada áudio dinamicamente
+    audios.forEach((audio, index) => {
+        var audioItem = document.createElement("div");
+        audioItem.classList.add("audio-item");
+
+        // Adicionando a classe para mudar a cor de fundo
+        audioItem.classList.add(audio.corFundo); // Aqui usamos a cor definida na lista de áudios
+
+        // Criando o botão de play/pause
+        var playButton = document.createElement("button");
+        playButton.innerText = "▶️";
+        playButton.classList.add("play-button");
+        playButton.setAttribute("data-id", index);
+
+        // Criando o nome do áudio
+        var audioName = document.createElement("span");
+       // audioName.innerText = audio.nome;
+       audioName.innerHTML = audio.nome;
+
+        // Criando o elemento de áudio
+        var audioElement = document.createElement("audio");
+        audioElement.src = audio.arquivo;
+        audioElement.id = "audio" + index;
+
+        // Armazena o elemento de áudio
+        audioElements[index] = audioElement;
+
+        // Evento de clique para tocar ou pausar o áudio
+        playButton.onclick = function () {
+            togglePlayPause(index, playButton);
+        };
+
+        // Adicionando elementos na lista
+        audioItem.appendChild(playButton);
+        audioItem.appendChild(audioName);
+        dropdown.appendChild(audioItem);
+        dropdown.appendChild(audioElement);
+    });
+
+    // Alternar visibilidade do menu
+    function toggleDropdown() {
+        dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+    }
+
+    // Esconder menu ao clicar fora
+    document.addEventListener("click", function (event) {
+        var isClickInside = document.querySelector(".dropdown").contains(event.target);
+        if (!isClickInside) {
+            dropdown.style.display = "none";
+        }
+    });
+
+    // Função para tocar ou pausar áudio
+    function togglePlayPause(index, button) {
+        var audio = audioElements[index];
+
+        if (audio.paused) {
+            // Parar todos os outros áudios antes de tocar um novo
+            Object.values(audioElements).forEach(a => {
+                a.pause();
+                a.currentTime = 0;
+            });
+
+            audio.play();
+            button.innerText = "⏸️"; // Muda para ícone de pausa
+        } else {
+            audio.pause();
+            button.innerText = "▶️"; // Muda para ícone de play
+        }
+
+        // Quando o áudio terminar, volta o botão para "Play"
+        audio.onended = function () {
+            button.innerText = "▶️";
+        };
+    }
+</script>
+
+
+
+
+
+
+
+
+
+<details class="sidebar-section">
+    <summary class="sidebar-section-title">Documentos & Manuais</summary>
+    
+    <!-- Novo contêiner em grid para duas colunas de botões -->
+    <div class="actions-grid">
+        <button id="abrir-popup1" class="sidebar-action-btn">📋 REGRAS DA VERSÃO</button>
+        <button id="abrir-popup2" class="sidebar-action-btn">📋 REGRAS ORIGINAIS</button>
+    </div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<!-- Depois (Moderno) -->
+<details class="sidebar-section" open>
+    <summary class="sidebar-section-title">Decks Gerais</summary>
+    
+    <div class="decks-grid">
+        
+        <div class="deck">
+            <img src="deck1/deck-back.jpeg" class="deck-back" onclick="drawCard(1)">
+            <p>CARTA</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(1)">Recolher</button>
+                <button onclick="openCardSelector(1)">Escolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck2/deck-back.jpeg" class="deck-back" onclick="drawCard(2)">
+            <p>REGRAS</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(2)">Recolher</button>
+                <button onclick="openCardSelector(2)">Escolher</button>
+            </div>
+        </div>
+        <div class="deck">
+            <img src="deck3/deck-back.jpeg" alt="Deck 3" class="deck-back" onclick="drawCard(3)" onerror="reloadDeckImage(this, 'deck3/deck-back.jpeg')">
+           <p>TERRENOS</p>
+           <div class="deck-controls">
+               <button onclick="reshuffleDeck(3)">Recolher</button>
+               <button onclick="openCardSelector(3)">Escolher</button>
+           </div>
+       </div>
+   </div>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="decks_dinamicos" style="">  </div>
+
+
+
+
+
+
+
+      
+
+
+
+<script>
+// ==========================================
+// SISTEMA DE JANELA DE REGRAS E ÍNDICES (VERSÃO RAIO-X BLINDADO)
+// ==========================================
+const style = document.createElement('style');
+style.innerHTML = `
+    .lista-indices-salvaveis {
+        scrollbar-width: thin;
+        scrollbar-color: gold #333;
+        /* Impede que o scroll do elemento suba para a página inteira */
+        overscroll-behavior: contain; 
+    }
+    .lista-indices-salvaveis::-webkit-scrollbar {
+        height: 8px; /* Altura da barra horizontal */
+        width: 8px;  /* Largura da barra vertical */
+        background: #222;
+    }
+    .lista-indices-salvaveis::-webkit-scrollbar-thumb {
+        background-color: gold;
+        border-radius: 4px;
+    }
+`;
+document.head.appendChild(style);
+
+
+
+//---------------------------------------------------
+
+function abrirJanelaRegras(config = {}) {
+    if (typeof deselectCard === 'function') deselectCard();
+
+    const uniqueId = config.id || (Date.now() + Math.floor(Math.random() * 1000));
+    let corAtualJanela = config.color || '#808080'; 
+
+    const marcador = document.createElement('div');
+    marcador.id = `marcador-regras-docs-${uniqueId}`; 
+    marcador.textContent = '📋';
+    Object.assign(marcador.style, {
+        position: 'fixed', width: '45px', height: '45px', backgroundColor: corAtualJanela,
+        color: 'black', fontSize: '22px', display: 'none', alignItems: 'center',
+        justifyContent: 'center', cursor: 'pointer', boxShadow: `0 0 12px ${corAtualJanela}cc`,
+        transition: 'transform 0.2s ease, background-color 0.2s', userSelect: 'none',
+        boxSizing: 'border-box', border: '1px solid #222'
+    });
+    marcador.onmouseenter = () => { marcador.style.transform = 'scale(1.1)'; };
+    marcador.onmouseleave = () => { marcador.style.transform = 'scale(1)'; };
+
+    const popup = document.createElement('div');
+    popup.id = `popup-regras-docs-${uniqueId}`; 
+    popup.classList.add('popup-note2'); 
+    
+    // 👇 ADICIONE ESTA LINHA AQUI 👇
+    popup.dataset.corAtual = corAtualJanela; // Grava a cor inicial no cofre
+    
+
+    const isMobile = window.innerWidth <= 768;
+    popup.style.position = 'fixed'; 
+    popup.style.left = config.left || (isMobile ? '5%' : '35%');
+    popup.style.top = config.top || (isMobile ? '15%' : '35%');
+    popup.style.width = config.width || (isMobile ? '90%' : '30%');
+    popup.style.height = config.height || (isMobile ? '70%' : '30%');
+    popup.style.zIndex = config.zIndex || (typeof topPopupZIndex !== 'undefined' ? ++topPopupZIndex : 999999);
+    
+    if (!isMobile && !config.width) { popup.style.minWidth = '400px'; popup.style.minHeight = '300px'; }
+
+
+
+    Object.assign(popup.style, {
+        backgroundColor: '#222', 
+        borderStyle: 'solid',
+        borderColor: corAtualJanela,
+        // 👇 A MÁGICA AQUI: Topo 3px, Direita 8px, Baixo 8px, Esquerda 8px
+        borderWidth: '3px 8px 8px 8px', 
+        borderRadius: '10px',
+        padding: '0', 
+        boxShadow: `0 0 20px ${corAtualJanela}cc`, 
+        display: 'flex',
+        flexDirection: 'column', 
+        overflow: 'hidden'
+    });
+    
+    
+    
+    
+
+    
+    
+
+    const header = document.createElement('div');
+    const titulo = document.createElement('span');
+    
+    // SUGESTÃO 2: Título dinâmico inteligente
+    let nomeTitulo = config.titulo || (config.src ? config.src.split('/').pop().split('.')[0].toUpperCase() : 'REGRAS');
+    titulo.textContent = nomeTitulo;
+    titulo.style.textShadow = '0px 0px 4px white, 0px 0px 2px white'; 
+    
+    
+    // definimos aqui a configuração do topo HEAD da janela onde esta o titulo e os botões
+   Object.assign(header.style, {
+    display: 'flex',
+    justifyContent: 'space-between', // Força os botões para a direita e o título para a esquerda
+    alignItems: 'center',
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '0 10px',
+    overflow: 'hidden', // Impede que conteúdos vazem
+    // 👇 ADICIONE ESTA LINHA:
+        backgroundColor: corAtualJanela
+    
+});
+    
+    
+    Object.assign(titulo.style, {
+    whiteSpace: 'nowrap',      // Impede o texto de quebrar em duas linhas
+    overflow: 'hidden',        // Esconde o que passar do limite
+    textOverflow: 'ellipsis',  // Adiciona o "..." automaticamente
+    flex: '1',                 // Faz o título ocupar o espaço disponível, mas sem empurrar os botões
+    marginRight: '10px'        // Garante um espaço de segurança antes dos botões
+});
+    
+    
+    
+    
+    header.appendChild(titulo);
+
+    const ferramentasHeader = document.createElement('div');
+    ferramentasHeader.style.cssText = 'display: flex; gap: 10px; align-items: center;';
+
+    const btnIndice = document.createElement('button');
+    btnIndice.textContent = '☰';
+    Object.assign(btnIndice.style, { background: 'transparent', border: '1px solid black', cursor: 'pointer', fontSize: '18px', marginRight: '5px' });
+
+    const menuIndice = document.createElement('div');
+   
+   
+   
+    Object.assign(menuIndice.style, {
+    position: 'absolute', 
+    top: '45px',    // Logo abaixo do seu header
+    left: '10px',   // Distância da borda esquerda
+    right: '10px',  // Distância da borda direita (isso força o resize automático!)
+    bottom: '10px', // Distância da borda inferior
+    backgroundColor: '#333', 
+    color: 'white', 
+    display: 'none', 
+    flexDirection: 'column', 
+    padding: '5px', 
+    borderRadius: '5px',
+    zIndex: '100', 
+    border: '1px solid gold',
+    boxSizing: 'border-box', // OBRIGATÓRIO: garante que o padding não estoure o tamanho
+    overflow: 'hidden'      // Esconde o scroll aqui para deixar o scroll apenas na lista
+});
+
+
+
+
+ const listaLinks = document.createElement('div');
+listaLinks.className = 'lista-indices-salvaveis'; 
+listaLinks.style.cssText = `
+    overflow-y: auto;     /* Scroll vertical quando a lista for longa */
+    overflow-x: auto;     /* Scroll horizontal quando o nome for longo */
+    flex: 1;              /* Ocupa todo o espaço disponível dentro do menu */
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+`;
+
+
+
+
+// E para navegadores baseados em Webkit (Chrome/Safari):
+// Adicione isto no seu script onde você estiliza o listaLinks
+const style = document.createElement('style');
+style.innerHTML = `
+    .lista-indices-salvaveis {
+        scrollbar-width: thin;
+        scrollbar-color: gold #333;
+    }
+    .lista-indices-salvaveis::-webkit-scrollbar {
+        height: 10px; /* Altura da barra horizontal */
+        width: 10px;  /* Largura da barra vertical */
+    }
+    .lista-indices-salvaveis::-webkit-scrollbar-thumb {
+        background-color: gold;
+        border-radius: 5px;
+        border: 2px solid #333;
+    }
+`;
+document.head.appendChild(style);
+
+
+
+
+
+
+    
+    
+    
+
+    const iframeWrapper = document.createElement('div');
+    iframeWrapper.style.cssText = "flex-grow: 1; position: relative; width: 100%; height: 100%; overflow: auto; background: white;";
+
+    const iframe = document.createElement('iframe');
+    iframe.src = config.src || 'SpiderHunt.html'; 
+    iframe.style.cssText = "position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; transform-origin: top left;";
+    iframeWrapper.appendChild(iframe);
+
+    iframe.addEventListener('load', () => {
+        if (config.scroll && parseInt(config.scroll) > 0) {
+            popup.dataset.lastScroll = config.scroll;
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.scrollTo(0, parseInt(config.scroll));
+                } catch(e){}
+            }, 150); 
+        }
+    });
+
+    const capturarBiometriaExata = (iframeWin) => {
+        const doc = iframeWin.document;
+        const centerX = iframeWin.innerWidth / 2;
+        const colunasX = [centerX, centerX - 80, centerX + 80];
+        
+        for (let y = 20; y < 500; y += 15) {
+            for (let x of colunasX) {
+                let el = doc.elementFromPoint(x, y);
+                if (!el || el === doc.body || el.tagName === 'HTML') continue;
+                
+                if (el.tagName === 'IMG') return { alvo: el, bio: "IMG:" + el.getAttribute('src') };
+                let imgInterna = el.querySelector('img');
+                if (imgInterna) return { alvo: imgInterna, bio: "IMG:" + imgInterna.getAttribute('src') };
+                
+                let texto = el.textContent.replace(/\s+/g, ' ').trim();
+                
+                if (texto.length < 5) {
+                    const subElementos = el.querySelectorAll('h1, h2, h3, h4, p, span, li');
+                    for (let sub of subElementos) {
+                        let t = sub.textContent.replace(/\s+/g, ' ').trim();
+                        if (t.length >= 5) {
+                            texto = t;
+                            el = sub; 
+                            break;
+                        }
+                    }
+                }
+                
+                let textoIrmao = "";
+                if (texto.length > 0 && texto.length < 60) {
+                    let bloco = el;
+                    while (bloco && !bloco.nextElementSibling && bloco.tagName !== 'BODY') {
+                        bloco = bloco.parentElement;
+                    }
+                    if (bloco && bloco.nextElementSibling) {
+                        textoIrmao = bloco.nextElementSibling.textContent.replace(/\s+/g, ' ').trim();
+                    }
+                }
+                
+                if (texto.length >= 3) {
+                    return { alvo: el, bio: "TXT:" + texto.substring(0, 80) + "|||" + textoIrmao.substring(0, 80) };
+                }
+            }
+        }
+        return { alvo: doc.body, bio: "TXT:" + doc.body.textContent.replace(/\s+/g, ' ').trim().substring(0, 80) + "|||" };     
+    };
+
+    const adicionarItemIndice = (nome, idAncora, textoIdentificador) => {
+        const itemContainer = document.createElement('div');
+        itemContainer.className = 'item-indice'; 
+        itemContainer.dataset.nome = nome;
+        itemContainer.dataset.anchorId = idAncora;
+        itemContainer.dataset.texto = textoIdentificador; 
+
+
+
+// 👇 Garante que o container não fique espremido
+// Dentro da sua função adicionarItemIndice:
+itemContainer.style.cssText = `
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 5px; 
+    border-bottom: 1px solid #555; 
+    gap: 8px; 
+    width: 100%;           /* Ocupa a largura total */
+    min-width: fit-content; /* Se o texto for longo, ele se estica (ativando o scroll horizontal) */
+    box-sizing: border-box;
+`;
+        
+        
+        
+        const linkTexto = document.createElement('span');
+linkTexto.style.cssText = `
+        cursor: pointer; 
+        color: gold; 
+        white-space: nowrap; /* Impede o nome de quebrar em duas linhas */
+        margin-right: 15px;
+    `;
+    
+    
+            linkTexto.textContent = nome;
+        
+        linkTexto.onclick = (e) => {
+            e.stopPropagation();
+            const iframeDoc = iframe.contentWindow.document;
+            let elementoAlvo = iframeDoc.querySelector(`[data-anchor-id="${idAncora}"]`);
+            
+            const biometriaAtual = itemContainer.dataset.texto || textoIdentificador;
+            
+            if (!elementoAlvo && biometriaAtual) {
+                if (biometriaAtual.startsWith('IMG:')) {
+                    const srcBuscado = biometriaAtual.substring(4);
+                    const imagens = iframeDoc.querySelectorAll('img');
+                    for (let img of imagens) {
+                        if (img.getAttribute('src') === srcBuscado || img.src.includes(srcBuscado)) {
+                            elementoAlvo = img; break;
+                        }
+                    }
+                } else if (biometriaAtual.startsWith('TXT:')) {
+                    const partes = biometriaAtual.substring(4).split('|||');
+                    const chave1 = partes[0].trim();
+                    const chave2 = partes.length > 1 ? partes[1].trim() : "";
+                    
+                    if (chave1.length < 3) {
+                        alert(`O índice "${nome}" foi salvo pegando um espaço vazio no passado! Vá até ele no manual e use o botão 🔄 para regravá-lo!`);
+                        return;
+                    }
+
+                    const todosElementos = iframeDoc.body.querySelectorAll('*');
+                    let candidatos = [];
+                    
+                    for (let el of todosElementos) {
+                        if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'NOSCRIPT') continue;
+                        const txtEl = el.textContent.replace(/\s+/g, ' ').trim();
+                        if (!txtEl) continue;
+                        
+                        if (txtEl === chave1 || txtEl.includes(chave1) || (chave1.includes(txtEl) && txtEl.length > 4)) {
+                            candidatos.push(el);
+                        }
+                    }
+                    
+                    let melhorElemento = null;
+                    let menorComprimento = Infinity;
+                    
+                    for (let c of candidatos) {
+                        let bloco = c;
+                        while (bloco && !bloco.nextElementSibling && bloco.tagName !== 'BODY') {
+                            bloco = bloco.parentElement;
+                        }
+                        let txtIrmao = (bloco && bloco.nextElementSibling) ? bloco.nextElementSibling.textContent.replace(/\s+/g, ' ').trim() : "";
+                        
+                        let validaIrmao = chave2 ? txtIrmao.includes(chave2.substring(0, 20)) : true;
+                        
+                        if (validaIrmao && c.textContent.length < menorComprimento) {
+                            menorComprimento = c.textContent.length;
+                            melhorElemento = c;
+                        }
+                    }
+                    
+                    if (!melhorElemento && candidatos.length > 0) {
+                        menorComprimento = Infinity;
+                        for (let c of candidatos) {
+                            if (c.textContent.length < menorComprimento) {
+                                menorComprimento = c.textContent.length;
+                                melhorElemento = c;
+                            }
+                        }
+                    }
+                    if (melhorElemento) elementoAlvo = melhorElemento;
+                }
+                
+                if (elementoAlvo) elementoAlvo.setAttribute('data-anchor-id', idAncora); 
+            }
+            
+            if (elementoAlvo) {
+                elementoAlvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                console.warn("Elemento não encontrado no manual. Retornando ao topo.");
+                iframe.contentWindow.scrollTo(0, 0); 
+            }
+            menuIndice.style.display = 'none';
+        };
+
+        const acoesContainer = document.createElement('div');
+        acoesContainer.style.cssText = "display: flex; gap: 4px; flex-shrink: 0;";
+
+        // SUGESTÃO 3: Botões bonitos para o menu de índices
+        const estiloBotao = "background: #444; border: 1px solid #111; border-radius: 4px; cursor: pointer; padding: 3px 5px; font-size: 12px; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.5);";
+        const eventoHoverIn = (e) => { e.target.style.background = '#666'; e.target.style.borderColor = 'gold'; };
+        const eventoHoverOut = (e) => { e.target.style.background = '#444'; e.target.style.borderColor = '#111'; };
+
+        const btnEditar = document.createElement('button');
+        btnEditar.textContent = '✏️'; btnEditar.title = 'Renomear índice';
+        btnEditar.style.cssText = estiloBotao;
+        btnEditar.onmouseover = eventoHoverIn; btnEditar.onmouseout = eventoHoverOut;
+        btnEditar.onclick = (e) => {
+            e.stopPropagation();
+            const novoNome = prompt('Digite o novo nome para este índice:', linkTexto.textContent);
+            if (novoNome && novoNome.trim() !== '') {
+                linkTexto.textContent = novoNome.trim();
+                itemContainer.dataset.nome = novoNome.trim();
+            }
+        };
+
+        const btnSubir = document.createElement('button');
+        btnSubir.textContent = '🔼'; btnSubir.title = 'Mover para cima';
+        btnSubir.style.cssText = estiloBotao;
+        btnSubir.onmouseover = eventoHoverIn; btnSubir.onmouseout = eventoHoverOut;
+        btnSubir.onclick = (e) => {
+            e.stopPropagation(); 
+            if (itemContainer.previousElementSibling) listaLinks.insertBefore(itemContainer, itemContainer.previousElementSibling);
+        };
+
+        const btnDescer = document.createElement('button');
+        btnDescer.textContent = '🔽'; btnDescer.title = 'Mover para baixo';
+        btnDescer.style.cssText = estiloBotao;
+        btnDescer.onmouseover = eventoHoverIn; btnDescer.onmouseout = eventoHoverOut;
+        btnDescer.onclick = (e) => {
+            e.stopPropagation();
+            if (itemContainer.nextElementSibling) listaLinks.insertBefore(itemContainer.nextElementSibling, itemContainer);
+        };
+
+        const btnRegravar = document.createElement('button');
+        btnRegravar.textContent = '🔄'; btnRegravar.title = 'Regravar posição';
+        btnRegravar.style.cssText = estiloBotao;
+        btnRegravar.onmouseover = eventoHoverIn; btnRegravar.onmouseout = eventoHoverOut;
+        btnRegravar.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm(`Regravar a posição de "${linkTexto.textContent}"?`)) {
+                const iframeDoc = iframe.contentWindow.document;
+                const antigoElemento = iframeDoc.querySelector(`[data-anchor-id="${idAncora}"]`);
+                if (antigoElemento) antigoElemento.removeAttribute('data-anchor-id');
+                
+                const captura = capturarBiometriaExata(iframe.contentWindow);
+                
+                captura.alvo.setAttribute('data-anchor-id', idAncora);
+                itemContainer.dataset.texto = captura.bio; 
+                if (typeof mostrarToast === 'function') mostrarToast(`Posição regravada!`);
+            }
+        };
+
+        const btnApagar = document.createElement('button');
+        btnApagar.textContent = '❌'; btnApagar.title = 'Apagar índice';
+        btnApagar.style.cssText = estiloBotao;
+        btnApagar.onmouseover = eventoHoverIn; btnApagar.onmouseout = eventoHoverOut;
+        btnApagar.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm(`Apagar o índice "${linkTexto.textContent}"?`)) itemContainer.remove();
+        };
+
+        acoesContainer.appendChild(btnEditar); acoesContainer.appendChild(btnSubir); 
+        acoesContainer.appendChild(btnDescer); acoesContainer.appendChild(btnRegravar); 
+        acoesContainer.appendChild(btnApagar);
+        
+        itemContainer.appendChild(linkTexto); itemContainer.appendChild(acoesContainer);
+        listaLinks.appendChild(itemContainer);
+    };
+
+    const btnAdd = document.createElement('button');
+    btnAdd.textContent = '➕ Acrescentar';
+    
+    
+    
+    // ... (seu código de definição do btnAdd continua igual)
+
+// 1. Ajuste o estilo do btnAdd para preencher a largura como um item da lista
+Object.assign(btnAdd.style, { 
+    cursor: 'pointer', 
+    marginBottom: '10px', 
+    padding: '10px 20px', // Aumente o padding para o botão ficar mais "robusto"
+    fontWeight: 'bold',
+    
+    // --- O SEGREDO ESTÁ AQUI ---
+    flex: '0 0 auto',       // Impede que o botão cresça (flex-grow: 0) e encolha (flex-shrink: 0)
+    alignSelf: 'center',    // Centraliza o botão no topo (ou use 'flex-start' para esquerda)
+    width: 'fit-content',   // O botão terá exatamente o tamanho do texto
+    // ---------------------------
+    
+    boxSizing: 'border-box'
+});
+
+// 2. ADICIONE O BOTÃO NA LISTA, NÃO NO MENU
+listaLinks.appendChild(btnAdd); 
+
+// 3. Adicione os itens da lista
+if (config.indices && config.indices.length > 0) {
+    config.indices.forEach(ind => adicionarItemIndice(ind.nome, ind.anchorId, ind.texto));
+}
+
+// 4. Adicione APENAS a lista no menu (o botão já está dentro dela)
+menuIndice.appendChild(listaLinks); 
+popup.appendChild(menuIndice);
+    
+    
+    
+    
+      btnAdd.onclick = (e) => {
+        e.stopPropagation();
+        const nome = prompt("Nome do marcador:");
+        if (nome) {
+            const elementoId = `ancora-${Date.now()}`;
+            const captura = capturarBiometriaExata(iframe.contentWindow);
+            
+            captura.alvo.setAttribute('data-anchor-id', elementoId);
+            adicionarItemIndice(nome, elementoId, captura.bio);
+        }
+    };
+
+   
+
+    menuIndice.appendChild(btnAdd); menuIndice.appendChild(listaLinks); popup.appendChild(menuIndice);
+    btnIndice.onclick = () => { menuIndice.style.display = menuIndice.style.display === 'none' ? 'flex' : 'none'; };
+    ferramentasHeader.appendChild(btnIndice); 
+
+   // --- NOVO SELETOR DE CORES COM ÍCONE ---
+const colorPicker = document.createElement('input');
+colorPicker.type = 'color';
+colorPicker.value = corAtualJanela;
+colorPicker.style.display = 'none'; // Esconde o input nativo
+
+// Criamos um botão que parece um ícone
+const colorBtn = document.createElement('button');
+colorBtn.innerHTML = `
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="white" style="pointer-events: none;">
+        <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-6.5 9c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5zm2-4c.83 0 1.5.67 1.5 1.5S8.33 11 7.5 11 6 10.33 6 9.5 6.67 8 7.5 8zm4 0c.83 0 1.5.67 1.5 1.5S12.33 11 11.5 11 10 10.33 10 9.5 10.67 8 11.5 8zm4 0c.83 0 1.5.67 1.5 1.5S16.33 11 15.5 11 14 10.33 14 9.5 14.67 8 15.5 8z"/>
+    </svg>
+`;
+
+// Estiliza o botão para combinar com o topo
+Object.assign(colorBtn.style, {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '4px',
+    marginLeft: '5px'
+});
+
+// Ao clicar no botão, simulamos o clique no input escondido
+colorBtn.onclick = () => colorPicker.click();
+
+// Lógica de atualização (a mesma de antes)
+colorPicker.addEventListener('input', (e) => {
+    corAtualJanela = e.target.value;
+    marcador.style.backgroundColor = corAtualJanela;
+    marcador.style.boxShadow = `0 0 12px ${corAtualJanela}cc`;
+    popup.style.borderColor = corAtualJanela;
+    popup.style.boxShadow = `0 0 20px ${corAtualJanela}cc`;
+    header.style.backgroundColor = corAtualJanela;
+    resizeHandle.style.background = corAtualJanela;
+// 👇 ADICIONE ESTA LINHA AQUI 👇
+    popup.dataset.corAtual = corAtualJanela; // Atualiza o cofre com a cor nova
+});
+
+// Adicionamos o botão (e não o input) ao cabeçalho
+ferramentasHeader.appendChild(colorBtn);
+// Adicionamos o input escondido ao documento
+document.body.appendChild(colorPicker);
+
+    const zoomContainer = document.createElement('div');
+    zoomContainer.style.cssText = "display: flex; align-items: center; gap: 5px; color: white; font-size: 11px; margin-right: 5px; font-weight: bold;";
+    
+    // SUGESTÃO 1: Adicionado o Indicador de % Numérico ao lado do Slider
+    const zoomTextLabel = document.createElement('span');
+    zoomTextLabel.textContent = `${config.zoom || '100'}%`;
+    zoomTextLabel.style.cssText = "min-width: 32px; text-align: right;";
+    
+    const zoomSlider = document.createElement('input');
+    zoomSlider.type = 'range'; zoomSlider.min = '50'; zoomSlider.max = '300'; zoomSlider.value = config.zoom || '100'; 
+    zoomSlider.style.width = '60px'; zoomSlider.style.cursor = 'pointer';
+
+    zoomSlider.oninput = (e) => {
+        const val = e.target.value / 100;
+        zoomTextLabel.textContent = `${e.target.value}%`; // Atualiza a %
+        iframe.style.transform = `scale(${val})`;
+        iframe.style.width = `${100 / val}%`; iframe.style.height = `${100 / val}%`;
+    };
+    iframe.onload = () => { zoomSlider.oninput({ target: { value: zoomSlider.value } }); };
+
+    zoomContainer.appendChild(zoomTextLabel);
+    zoomContainer.appendChild(zoomSlider); 
+    ferramentasHeader.appendChild(zoomContainer);
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '❌';
+    Object.assign(closeButton.style, { background: 'red', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '50%', width: '24px', height: '24px', fontWeight: 'bold' });
+    closeButton.onclick = () => { if (confirm("Deseja realmente fechar as Regras?")) { popup.remove(); marcador.remove(); } };
+    ferramentasHeader.appendChild(closeButton); header.appendChild(ferramentasHeader);
+
+
+
+
+    const resizeHandle = document.createElement('div');
+    Object.assign(resizeHandle.style, { width: '24px', height: '24px', background: corAtualJanela, opacity: '0.8', position: 'absolute', right: '0', bottom: '0', cursor: 'nwse-resize', zIndex: '10', borderRadius: '5px 0 0 0' });
+    
+    
+    
+    
+    
+    
+     //---------------------------------------------------------------
+ 
+// --- INÍCIO: DUPLO CLIQUE/TOQUE PARA ENGAVETAR A JANELA À DIREITA ---
+    
+    const engavetarJanela = (e) => {
+        // Ignora se o toque/clique foi em cima de um botão
+        if (e && e.target && (e.target.tagName === 'BUTTON' || e.target.closest('button'))) return;
+
+        // Configura o popup como engavetado à direita ('right')
+        popup.dataset.dockedEdge = 'right'; 
+        popup.dataset.isDockedOpen = 'false'; 
+        
+        // O TRUQUE MÁGICO: Em vez de 'display: none', deixamos invisível e jogamos para fora da tela!
+        // O navegador nunca vai recarregar o iframe e o scroll será preservado 100% nativamente.
+        popup.style.opacity = '0'; 
+        popup.style.pointerEvents = 'none'; 
+        popup.style.left = '-9999px'; 
+        
+        // Exibe e prepara o marcador
+        marcador.style.display = 'flex'; 
+        marcador.style.zIndex = (typeof topPopupZIndex !== 'undefined' ? ++topPopupZIndex : 999999);
+        marcador.style.left = 'auto'; marcador.style.right = 'auto'; marcador.style.top = 'auto'; marcador.style.bottom = 'auto';
+        marcador.style.border = `2px solid ${corAtualJanela}`;
+
+        // Calcula Y para ficar "abaixo da metade" (55% da altura total da tela)
+        const posicaoY = window.innerHeight * 0.55;
+        
+        // Posiciona o marcador (gaveta) colado na direita e abaixo do meio
+        marcador.style.right = '0px'; 
+        marcador.style.top = `${Math.max(10, Math.min(window.innerHeight - 55, posicaoY))}px`; 
+        marcador.style.borderRadius = '8px 0 0 8px'; 
+        marcador.style.borderRight = 'none'; 
+    };
+
+    // Dispara no PC (Duplo Clique)
+    header.addEventListener('dblclick', engavetarJanela);
+
+    // Dispara no CELULAR (Duplo Toque)
+    let lastTap = 0;
+    header.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        
+        if (tapLength < 300 && tapLength > 0) {
+            engavetarJanela(e);
+            e.preventDefault(); // Impede o zoom nativo indesejado do celular
+        }
+        lastTap = currentTime;
+    });
+
+    // Restaura a janela
+    const restaurarJanela = () => {
+        marcador.style.display = 'none'; 
+        
+        // Removemos a invisibilidade e trazemos a janela de volta pro meio da tela
+        popup.style.opacity = '1'; 
+        popup.style.pointerEvents = 'auto'; 
+        popup.style.left = (window.innerWidth <= 768) ? '5%' : '35%';
+        popup.style.top = (window.innerWidth <= 768) ? '15%' : '35%';
+        if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex;
+        
+        // Não precisamos mais mandar o iframe rolar via código, pois ele nunca foi fechado de verdade!
+    };
+    marcador.onclick = restaurarJanela;
+    
+    // --- FIM: DUPLO CLIQUE/TOQUE PARA ENGAVETAR A JANELA À DIREITA ---
+
+
+  //---------------------------------------------------------------
+    
+    
+    
+    
+    
+    
+    
+
+    popup.appendChild(header); popup.appendChild(iframeWrapper); popup.appendChild(resizeHandle);
+    document.body.appendChild(popup); document.body.appendChild(marcador);
+
+    let isDragging = false, isResizing = false;
+    let startX, startY, startWidth, startHeight, initialLeft, initialTop;
+
+    const onMove = (clientX, clientY) => {
+        if (isDragging) { popup.style.left = `${initialLeft + clientX - startX}px`; popup.style.top = `${initialTop + clientY - startY}px`; } 
+        else if (isResizing) { popup.style.width = `${Math.max(280, startWidth + clientX - startX)}px`; popup.style.height = `${Math.max(180, startHeight + clientY - startY)}px`; }
+    };
+   
+   
+   const onEnd = () => {
+        iframe.style.pointerEvents = 'auto';
+        document.removeEventListener('mousemove', onMouseMove); 
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('touchmove', onTouchMove); 
+        document.removeEventListener('touchend', onTouchEnd);
+        
+        if (isDragging) {
+            isDragging = false;
+            const rect = popup.getBoundingClientRect(); 
+            const halfWidth = rect.width / 2; 
+            const halfHeight = rect.height / 2;
+            const outLeft = (rect.left + halfWidth) < 0, outRight = (rect.left + halfWidth) > window.innerWidth;
+            const outTop = (rect.top + halfHeight) < 0, outBottom = (rect.top + halfHeight) > window.innerHeight;
+            
+            if (outLeft || outRight || outTop || outBottom) {
+               
+                let borda = '';
+                if (outLeft) borda = 'left'; else if (outRight) borda = 'right'; else if (outTop) borda = 'top'; else if (outBottom) borda = 'bottom';
+
+                // --- O TRUQUE DA INVISIBILIDADE APLICADO NO ARRASTO ---
+                popup.dataset.dockedEdge = borda; 
+                popup.dataset.isDockedOpen = 'false'; 
+                popup.style.opacity = '0'; 
+                popup.style.pointerEvents = 'none';
+                popup.style.left = '-9999px'; // Joga para longe
+                
+                marcador.style.display = 'flex'; 
+                marcador.style.zIndex = (typeof topPopupZIndex !== 'undefined' ? ++topPopupZIndex : 999999);
+                marcador.style.left = 'auto'; marcador.style.right = 'auto'; marcador.style.top = 'auto'; marcador.style.bottom = 'auto';
+                marcador.style.border = `2px solid ${corAtualJanela}`;
+                
+                marcador.onclick = () => {
+                    const bordaAtual = popup.dataset.dockedEdge; 
+                    const estaAberta = popup.dataset.isDockedOpen === 'true'; 
+                    const rectMarcador = marcador.getBoundingClientRect();
+                    
+                    if (estaAberta) {
+                        popup.style.transition = 'left 0.3s ease, top 0.3s ease, opacity 0.3s ease';
+                        if (bordaAtual === 'left') popup.style.left = `-${popup.offsetWidth + 20}px`; 
+                        else if (bordaAtual === 'right') popup.style.left = `${window.innerWidth + 20}px`; 
+                        else if (bordaAtual === 'top') popup.style.top = `-${popup.offsetHeight + 20}px`; 
+                        else if (bordaAtual === 'bottom') popup.style.top = `${window.innerHeight + 20}px`;
+                        
+                        popup.dataset.isDockedOpen = 'false'; 
+                        
+                        setTimeout(() => { 
+                            if (popup.dataset.isDockedOpen === 'false') {
+                                popup.style.opacity = '0';
+                                popup.style.pointerEvents = 'none';
+                                popup.style.left = '-9999px';
+                            }
+                        }, 300);
+                    } else {
+                        // --- REMOVENDO O DISPLAY: NONE E VOLTANDO A OPACIDADE ---
+                        popup.style.opacity = '1';
+                        popup.style.pointerEvents = 'auto';
+                        if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex;
+                        popup.style.transition = 'none'; 
+                        
+                        const w = popup.offsetWidth; 
+                        const h = popup.offsetHeight;
+                        
+                        if (bordaAtual === 'left') { popup.style.left = `-${w}px`; popup.style.top = `${rectMarcador.top}px`; } 
+                        else if (bordaAtual === 'right') { popup.style.left = `${window.innerWidth}px`; popup.style.top = `${rectMarcador.top}px`; } 
+                        else if (bordaAtual === 'top') { popup.style.top = `-${h}px`; popup.style.left = `${rectMarcador.left}px`; } 
+                        else if (bordaAtual === 'bottom') { popup.style.top = `${window.innerHeight}px`; popup.style.left = `${rectMarcador.left}px`; }
+                        
+                        void popup.offsetWidth; // Força renderização
+                        
+                        popup.style.transition = 'left 0.3s ease, top 0.3s ease';
+                        
+                        if (bordaAtual === 'left') popup.style.left = `${rectMarcador.width + 5}px`; 
+                        else if (bordaAtual === 'right') popup.style.left = `${window.innerWidth - w - rectMarcador.width - 5}px`; 
+                        else if (bordaAtual === 'top') popup.style.top = `${rectMarcador.height + 5}px`; 
+                        else if (bordaAtual === 'bottom') popup.style.top = `${window.innerHeight - h - rectMarcador.height - 5}px`;
+                        
+                        popup.dataset.isDockedOpen = 'true';
+                        // E a mágica acontece: o scroll da página já vai estar perfeitamente salvo!
+                    }
+                };
+
+                // ALINHAMENTO DO MARCADOR
+                if (outLeft) { 
+                    marcador.style.left = '0px'; 
+                    marcador.style.top = `${Math.max(10, Math.min(window.innerHeight - 55, rect.top))}px`; 
+                    marcador.style.borderRadius = '0 8px 8px 0'; 
+                    marcador.style.borderLeft = 'none'; 
+                } else if (outRight) { 
+                    marcador.style.right = '0px'; 
+                    marcador.style.top = `${Math.max(10, Math.min(window.innerHeight - 55, rect.top))}px`; 
+                    marcador.style.borderRadius = '8px 0 0 8px'; 
+                    marcador.style.borderRight = 'none'; 
+                } else if (outTop) { 
+                    marcador.style.top = '0px'; 
+                    marcador.style.left = `${Math.max(10, Math.min(window.innerWidth - 55, rect.left + halfWidth - 22))}px`; 
+                    marcador.style.borderRadius = '0 0 8px 8px'; 
+                    marcador.style.borderTop = 'none'; 
+                } else if (outBottom) { 
+                    marcador.style.bottom = '0px'; 
+                    marcador.style.left = `${Math.max(10, Math.min(window.innerWidth - 55, rect.left + halfWidth - 22))}px`; 
+                    marcador.style.borderRadius = '8px 8px 0 0'; 
+                    marcador.style.borderBottom = 'none'; 
+                }
+            }
+        }
+        isResizing = false;
+    };
+
+    const onMouseMove = (e) => onMove(e.clientX, e.clientY);
+
+
+
+
+
+// No seu onTouchMove, remova o e.preventDefault():
+  const onTouchMove = (e) => { 
+    // Captura o ponto de toque atual
+    const touch = e.touches[0];
+    
+    // Se estiver arrastando OU redimensionando, processa o movimento
+    if (isDragging || isResizing) {
+        onMove(touch.clientX, touch.clientY); 
+        
+        // Só bloqueia o scroll da página se realmente estivermos movendo/redimensionando a janela
+        e.preventDefault(); 
+    }
+};
+    
+    
+    
+    
+        const onMouseUp = onEnd; const onTouchEnd = onEnd;
+    
+    const startDrag = (clientX, clientY, targetLeft, targetTop, targetElement) => { 
+        if (targetElement.tagName === 'INPUT' || targetElement.tagName === 'BUTTON') return; 
+        popup.style.transition = 'none';
+        if (popup.dataset.isDockedOpen === 'true' || popup.dataset.dockedEdge) { popup.dataset.isDockedOpen = 'false'; popup.dataset.dockedEdge = ''; marcador.style.display = 'none'; }
+        isDragging = true; startX = clientX; startY = clientY; initialLeft = targetLeft; initialTop = targetTop; iframe.style.pointerEvents = 'none'; 
+    };
+    const startResize = (clientX, clientY, w, h) => { isResizing = true; startX = clientX; startY = clientY; startWidth = w; startHeight = h; iframe.style.pointerEvents = 'none'; };
+
+
+
+
+ const handleDragStart = (e) => {
+    const el = e.target;
+    
+    // Se clicou no resizeHandle ou dentro da lista, para aqui imediatamente!
+    if (el === resizeHandle || el.closest('.lista-indices-salvaveis')) {
+        return;
+    }
+
+        // 2. Bloqueia o início do arraste se for um campo interativo OU se o toque foi DENTRO da lista de índices
+        // Isso permite que o scroll nativo do navegador tome conta da lista de índices
+        if (['INPUT', 'BUTTON', 'TEXTAREA'].includes(el.tagName) || el.closest('.lista-indices-salvaveis')) {
+            return;
+        }
+        
+        // 3. Obtém coordenadas (suporta mouse e toque)
+        const rect = popup.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0); 
+        const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+        
+        const margin = 8;
+        
+        const onEdge = (clientX < rect.left + margin) || 
+                       (clientX > rect.right - margin) || 
+                       (clientY > rect.bottom - margin);
+
+        // 4. Inicia apenas se for no cabeçalho ou nas bordas
+        if (el === header || el.parentElement === header || onEdge) {
+            
+            // 5. APENAS aplica preventDefault se for um evento de mouse (PC) ou 
+            // se tiver certeza que não está rolando a lista (celular).
+            // Removi o preventDefault genérico para não travar o scroll do celular.
+            if (e.type !== 'touchstart' && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
+            
+            startDrag(clientX, clientY, popup.offsetLeft, popup.offsetTop, el);
+            
+            // Adiciona listeners globais
+            document.addEventListener('mousemove', onMouseMove); 
+            document.addEventListener('mouseup', onMouseUp);
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd);
+        }
+    };
+
+
+
+
+// --- REGISTRO DE EVENTOS FINAL E LIMPO ---
+
+// 1. Arrastar janela
+popup.addEventListener('mousedown', handleDragStart);
+popup.addEventListener('touchstart', handleDragStart, { passive: false });
+
+// 2. Redimensionar (Mouse)
+resizeHandle.addEventListener('mousedown', (e) => { 
+    e.stopPropagation();
+    startResize(e.clientX, e.clientY, popup.offsetWidth, popup.offsetHeight); 
+    document.addEventListener('mousemove', onMouseMove); 
+    document.addEventListener('mouseup', onMouseUp);
+});
+
+// 3. Redimensionar (Touch)
+resizeHandle.addEventListener('touchstart', (e) => { 
+    e.stopPropagation(); 
+    startResize(e.touches[0].clientX, e.touches[0].clientY, popup.offsetWidth, popup.offsetHeight); 
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+}, { passive: false });
+
+// 4. Z-Index (Foco) - Adicionado via addEventListener para não conflitar
+const updateZIndex = () => { 
+    if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex; 
+};
+popup.addEventListener('mousedown', updateZIndex);
+popup.addEventListener('touchstart', updateZIndex, { passive: true });
+
+// -----------------------------------------------------------
+
+// 4. Z-Index (Foco)
+popup.addEventListener('mousedown', () => { if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex; });
+popup.addEventListener('touchstart', () => { if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex; }, {passive: true});
+
+// -----------------------------------------------------------
+
+
+
+    popup.onmousedown = () => { if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex; };
+    popup.addEventListener('touchstart', () => { if (typeof topPopupZIndex !== 'undefined') popup.style.zIndex = ++topPopupZIndex; }, {passive: true});
+}
+
+document.getElementById('abrir-popup1').addEventListener('click', () => {
+    abrirJanelaRegras({ src: 'SpiderHunt.html' });
+});
+</script>
+
+
+
+   
+<!-- Abaixo os botões para abrir as popup das regras e dos eventos               
+<button id="abrir-popup1"  style="border: 2px solid white; background-color: darkred; ">📋 <b><br> REGRAS <br> DESTA VERSAO</b></button>
+
+<pre>
+</pre>
+    
+<script>
+document.getElementById('abrir-popup1').addEventListener('click', () => {
+    const fakeCard = document.createElement('div');
+    fakeCard.setAttribute('data-original-src', 'deck65/card1.jpeg');
+    fakeCard.setAttribute('data-rotation', '0');
+    fakeCard.setAttribute('data-flipped', 'false');
+    
+    openPopupZoom(fakeCard, { loadAllPages: true }); // ADICIONADO AQUI
+});
+</script>  
+ --> 
+
+
+ 
+<script>
+document.getElementById('abrir-popup2').addEventListener('click', () => {
+    const fakeCard = document.createElement('div');
+    fakeCard.setAttribute('data-original-src', 'deck66/card1.jpeg');
+    fakeCard.setAttribute('data-rotation', '0');
+    fakeCard.setAttribute('data-flipped', 'false');
+    
+    openPopupZoom(fakeCard, { loadAllPages: true }); // ADICIONADO AQUI
+});
+</script>
+
+
+<!-- SEÇÃO RETRÁTIL: TOKENS GERAIS -->
+<details class="sidebar-section">
+    <summary class="sidebar-section-title">Tokens Gerais</summary>
+    
+    <div class="decks-grid">
+        
+        <div class="deck">
+            <img src="deck9/card1.jpeg" alt="Deck 9" class="deck-back" onclick="drawCard(9)" onerror="reloadDeckImage(this, 'deck9/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(9)">Recolher</button>
+                <!-- <button onclick="openCardSelector(9)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck10/card1.jpeg" alt="Deck 10" class="deck-back" onclick="drawCard(10)" onerror="reloadDeckImage(this, 'deck10/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(10)">Recolher</button>
+                <!-- <button onclick="openCardSelector(10)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck11/card1.jpeg" alt="Deck 11" class="deck-back" onclick="drawCard(11)" onerror="reloadDeckImage(this, 'deck11/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(11)">Recolher</button>
+                <!-- <button onclick="openCardSelector(11)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck14/card1.jpeg" alt="Deck 14" class="deck-back" onclick="drawCard(14)" onerror="reloadDeckImage(this, 'deck14/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(14)">Recolher</button>
+                <!-- <button onclick="openCardSelector(14)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck13/card1.jpeg" alt="Deck 13" class="deck-back" onclick="drawCard(13)" onerror="reloadDeckImage(this, 'deck13/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(13)">Recolher</button>
+                <!-- <button onclick="openCardSelector(13)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck43/card1.jpeg" alt="Deck 43" class="deck-back" onclick="drawCard(43)" onerror="reloadDeckImage(this, 'deck43/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(43)">Recolher</button>
+                <!-- <button onclick="openCardSelector(43)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck12/card1.jpeg" alt="Deck 12" class="deck-back" onclick="drawCard(12)" onerror="reloadDeckImage(this, 'deck12/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(12)">Recolher</button>
+                <!-- <button onclick="openCardSelector(12)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck8/card1.jpeg" alt="Deck 8" class="deck-back" onclick="drawCard(8)" onerror="reloadDeckImage(this, 'deck8/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(8)">Recolher</button>
+                <!-- <button onclick="openCardSelector(8)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck7/deck-back.jpeg" alt="Deck 7" class="deck-back" onclick="drawCard(7)" onerror="reloadDeckImage(this, 'deck7/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(7)">Recolher</button>
+                <!-- <button onclick="openCardSelector(7)">Escolher</button> -->
+            </div>
+        </div>             
+                
+        <div class="deck">
+            <img src="deck69/deck-back.jpeg" alt="Deck 69" class="deck-back" onclick="drawCard(69)" onerror="reloadDeckImage(this, 'deck69/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(69)">Recolher</button>
+                <!-- <button onclick="openCardSelector(69)">Escolher</button> -->
+            </div>
+        </div>   
+                
+        <div class="deck">
+            <img src="deck71/deck-back.jpeg" alt="Deck 71" class="deck-back" onclick="drawCard(71)" onerror="reloadDeckImage(this, 'deck71/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(71)">Recolher</button>
+                <!-- <button onclick="openCardSelector(71)">Escolher</button> -->
+            </div>
+        </div>         
+                                        
+        <div class="deck">
+            <img src="deck19/deck-back.jpeg" alt="Deck 19" class="deck-back" onclick="drawCard(19)" onerror="reloadDeckImage(this, 'deck19/deck-back.jpeg')">
+            <p>MARCADORES<br>LOCAIS</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(19)">Recolher</button>
+                <button onclick="openCardSelector(19)">Escolher</button>
+            </div>
+        </div>
+                
+        <div class="deck">
+            <img src="deck36/deck-back.jpeg" alt="Deck 36" class="deck-back" onclick="drawCard(36)" onerror="reloadDeckImage(this, 'deck36/deck-back.jpeg')">
+            <p>MARCADORES<br>PRETO ou<br>VERMELHO</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(36)">Recolher</button>
+                <!-- <button onclick="openCardSelector(36)">Escolher</button> -->
+            </div>
+        </div>              
+                
+        <div class="deck">
+            <img src="deck24/deck-back.jpeg" alt="Deck 24" class="deck-back" onclick="drawCard(24)" onerror="reloadDeckImage(this, 'deck24/deck-back.jpeg')">
+            <p>FOGUETE</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(24)">Recolher</button>
+                <!-- <button onclick="openCardSelector(24)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck38/card1.jpeg" alt="Deck 38" class="deck-back" onclick="drawCard(38)" onerror="reloadDeckImage(this, 'deck38/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(38)">Recolher</button>
+                <!-- <button onclick="openCardSelector(38)">Escolher</button> -->
+            </div>
+        </div>
+                 
+        <div class="deck">
+            <img src="deck39/card1.jpeg" alt="Deck 39" class="deck-back" onclick="drawCard(39)" onerror="reloadDeckImage(this, 'deck39/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(39)">Recolher</button>
+                <!-- <button onclick="openCardSelector(39)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck37/card1.jpeg" alt="Deck 37" class="deck-back" onclick="drawCard(37)" onerror="reloadDeckImage(this, 'deck37/deck-back.jpeg')">
+            <p>MARCADORES</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(37)">Recolher</button>
+                <!-- <button onclick="openCardSelector(37)">Escolher</button> -->
+            </div>
+        </div>
+            
+        <div class="deck">
+            <img src="deck72/card1.jpeg" alt="Deck 72" class="deck-back" onclick="drawCard(72)" onerror="reloadDeckImage(this, 'deck72/deck-back.jpeg')">
+            <p>CAMINHADA</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(72)">Recolher</button>
+                <!-- <button onclick="openCardSelector(72)">Escolher</button> -->
+            </div>
+        </div>              
+
+        <div class="deck">
+            <img src="deck35/card1.jpeg" alt="Deck 35" class="deck-back" onclick="drawCard(35)" onerror="reloadDeckImage(this, 'deck35/deck-back.jpeg')">
+            <p>EGGS</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(35)">Recolher</button>
+                <!-- <button onclick="openCardSelector(35)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck55/deck-back.jpeg" alt="Deck 55" class="deck-back" onclick="drawCard(55)" onerror="reloadDeckImage(this, 'deck55/deck-back.jpeg')">
+            <p>MINIATURAS<br>PERSONAGENS</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(55)">Embaralhar</button>
+                <button onclick="openCardSelector(55)">Escolher</button>
+            </div>
+        </div>
+        
+        <div class="deck">
+            <img src="deck54/deck-back.jpeg" alt="Deck 54" class="deck-back" onclick="drawCard(54)" onerror="reloadDeckImage(this, 'deck54/deck-back.jpeg')">
+            <p>MINIATURAS<br>INIMIGOS</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(54)">Embaralhar</button>
+                <button onclick="openCardSelector(54)">Escolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck20/deck-back.jpeg" alt="Deck 20" class="deck-back" onclick="drawCard(20)" onerror="reloadDeckImage(this, 'deck20/deck-back.jpeg')">
+            <p>MINIATURA<br>ZUMBI VERDE</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(20)">Recolher</button>
+                <button onclick="openCardSelector(20)">Escolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck21/deck-back.jpeg" alt="Deck 21" class="deck-back" onclick="drawCard(21)" onerror="reloadDeckImage(this, 'deck21/deck-back.jpeg')">
+            <p>MINIATURA<br>ZUMBI AZUL</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(21)">Recolher</button>
+                <button onclick="openCardSelector(21)">Escolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck22/deck-back.jpeg" alt="Deck 22" class="deck-back" onclick="drawCard(22)" onerror="reloadDeckImage(this, 'deck22/deck-back.jpeg')">
+            <p>MINIATURA<br>ZUMBI AMARELO</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(22)">Recolher</button>
+                <button onclick="openCardSelector(22)">Escolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck23/deck-back.jpeg" alt="Deck 23" class="deck-back" onclick="drawCard(23)" onerror="reloadDeckImage(this, 'deck23/deck-back.jpeg')">
+            <p>MINIATURA<br>ZUMBI BRANCO</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(23)">Recolher</button>
+                <button onclick="openCardSelector(23)">Escolher</button>
+            </div>
+        </div>
+
+    </div>
+</details>
+
+                    
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- SEÇÃO RETRÁTIL: DADOS GERAIS -->
+<details class="sidebar-section">
+    <summary class="sidebar-section-title">Dados Gerais</summary>
+    
+    <div class="decks-grid">
+        
+        <!-- Decks Comentados Antigos -->
+        <!--
+        <div class="deck">
+            <img src="deck17/deck-back.jpeg" alt="Deck 17" class="deck-back" onclick="drawCard(17)" onerror="reloadDeckImage(this, 'deck17/deck-back.jpeg')">
+            <p>DADO ZOMBICIDE TYNE</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(17)">Recolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck19/deck-back.jpeg" alt="Deck 19" class="deck-back" onclick="drawCard(19)" onerror="reloadDeckImage(this, 'deck19/deck-back.jpeg')">
+            <p>DADO de ORC/GOBLIN</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(19)">Recolher</button>
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck18/deck-back.jpeg" alt="Deck 18" class="deck-back" onclick="drawCard(18)" onerror="reloadDeckImage(this, 'deck18/deck-back.jpeg')">
+            <p>DADO de LUTA</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(18)">Recolher</button>
+            </div>
+        </div>
+        -->
+
+        <div class="deck">
+            <img src="deck16/deck-back.jpeg" alt="Deck 16" class="deck-back" onclick="drawCard(16)" onerror="reloadDeckImage(this, 'deck16/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(16)">Recolher</button>
+                <!-- <button onclick="openCardSelector(16)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck30/deck-back.jpeg" alt="Deck 30" class="deck-back" onclick="drawCard(30)" onerror="reloadDeckImage(this, 'deck30/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(30)">Recolher</button>
+                <!-- <button onclick="openCardSelector(30)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck31/deck-back.jpeg" alt="Deck 31" class="deck-back" onclick="drawCard(31)" onerror="reloadDeckImage(this, 'deck31/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(31)">Recolher</button>
+                <!-- <button onclick="openCardSelector(31)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck32/deck-back.jpeg" alt="Deck 32" class="deck-back" onclick="drawCard(32)" onerror="reloadDeckImage(this, 'deck32/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(32)">Recolher</button>
+                <!-- <button onclick="openCardSelector(32)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck33/deck-back.jpeg" alt="Deck 33" class="deck-back" onclick="drawCard(33)" onerror="reloadDeckImage(this, 'deck33/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(33)">Recolher</button>
+                <!-- <button onclick="openCardSelector(33)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck34/deck-back.jpeg" alt="Deck 34" class="deck-back" onclick="drawCard(34)" onerror="reloadDeckImage(this, 'deck34/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(34)">Recolher</button>
+                <!-- <button onclick="openCardSelector(34)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck42/deck-back.jpeg" alt="Deck 42" class="deck-back" onclick="drawCard(42)" onerror="reloadDeckImage(this, 'deck42/deck-back.jpeg')">
+            <p>D6</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(42)">Recolher</button>
+                <!-- <button onclick="openCardSelector(42)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck46/deck-back.jpeg" alt="Deck 46" class="deck-back" onclick="drawCard(46)" onerror="reloadDeckImage(this, 'deck46/deck-back.jpeg')">
+            <p>D20</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(46)">Recolher</button>
+                <!-- <button onclick="openCardSelector(46)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck45/deck-back.jpeg" alt="Deck 45" class="deck-back" onclick="drawCard(45)" onerror="reloadDeckImage(this, 'deck45/deck-back.jpeg')">
+            <p>D20</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(45)">Recolher</button>
+                <!-- <button onclick="openCardSelector(45)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck40/deck-back.jpeg" alt="Deck 40" class="deck-back" onclick="drawCard(40)" onerror="reloadDeckImage(this, 'deck40/deck-back.jpeg')">
+            <p>D3</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(40)">Recolher</button>
+                <!-- <button onclick="openCardSelector(40)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck41/deck-back.jpeg" alt="Deck 41" class="deck-back" onclick="drawCard(41)" onerror="reloadDeckImage(this, 'deck41/deck-back.jpeg')">
+            <p>D4</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(41)">Recolher</button>
+                <!-- <button onclick="openCardSelector(41)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck47/deck-back.jpeg" alt="Deck 47" class="deck-back" onclick="drawCard(47)" onerror="reloadDeckImage(this, 'deck47/deck-back.jpeg')">
+            <p>D8</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(47)">Recolher</button>
+                <!-- <button onclick="openCardSelector(47)">Escolher</button> -->
+            </div>
+        </div>
+
+        <div class="deck">
+            <img src="deck61/deck-back.jpeg" alt="Deck 61" class="deck-back" onclick="drawCard(61)" onerror="reloadDeckImage(this, 'deck61/deck-back.jpeg')">
+            <p>D12</p>
+            <div class="deck-controls">
+                <button onclick="reshuffleDeck(61)">Recolher</button>
+                <!-- <button onclick="openCardSelector(61)">Escolher</button> -->
+            </div>
+        </div>
+
+    </div>
+</details>
+
+
+
+
+
+
+<!-- SEÇÃO RETRÁTIL: DESCARTE -->
+<details class="sidebar-section" open>
+    <summary class="sidebar-section-title">Descarte</summary>
+    
+    <div class="decks-grid">
+        
+        <div class="deck">
+            <img src="deck44/deck-back.jpeg" alt="Deck 44" class="deck-back" onclick="drawCard(44)" onerror="reloadDeckImage(this, 'deck44/deck-back.jpeg')">
+            <p>DESCARTE</p>
+            <div class="deck-controls">
+                <!-- <button onclick="reshuffleDeck(44)">Recolher</button> -->
+                <button onclick="openDeck44Selector()">Ver Descarte</button>
+            </div>
+        </div>
+
+    </div>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- SCRIPT DE BLOQUEIO DE BOTÃO DIREITO ISOLADO -->
+<script>
+    // Bloqueia o botão direito apenas na área com o id "table-area"
+    var tableArea = document.getElementById('table-area');
+    if (tableArea) {
+        tableArea.addEventListener('contextmenu', function(event) {
+            event.preventDefault();  // Impede o menu de contexto de abrir
+            alert("O botão direito está desabilitado nesta área.");
+        });
+    }
+</script>
+
+
+
+                
+                
+                
+
+
+
+          </div>
+        </div>
+  <!--     _____________________________________________________________  -->
+
+
+
+
+
+
+
+
+        <!-- Coluna da direita (mesa de jogo) -->
+        <div class="right-column">
+<br>
+
+
+
+
+
+
+
+<script>
+function triggerNotePopup(event) {
+    const fakeEvent = {
+        clientX: event.clientX || window.innerWidth / 2,
+        clientY: event.clientY || window.innerHeight / 2
+    };
+    openPopupNote(fakeEvent);
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+<div id="janelaFlutuante" tabindex="0">
+    <div id="barraTitulo">
+        <span>Regras, Anotações e Vídeos!</span>
+        <button class="botao" id="botaoMinimizar">−</button>
+    </div>
+    <iframe src="dados.html"></iframe> <!-- Substitua por seu URL -->
+</div>
+
+
+
+
+    
+            <div class="table-wrapper" id="table-wrapper" style="border: 2px solid white;">
+                         <div class="table-area" id="table-area">
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- AQUI FICARIA AS IMAGENS FIXAS DA MESA! MAS NÂO CONSEGI AINDA FAZER FUNCIONAR DIREITO -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    <!-- Cartas sorteadas aparecerão aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    
+    
+
+     <!-- Botões Undo e Redo -->
+<div style="text-align: center;">
+<div id="undo-container" >
+    <button id="undo-button" style="border: 2px solid white; padding: 5px 10px; background-color: transparent; color: white;"><< UNDO</button>
+    <button id="redo-button" style="border: 2px solid white; padding: 5px 10px; background-color: transparent; color: white;">REDO >></button>
+    
+    <!--
+    <b>--</b>
+    <button id="restore-button" style="border: 2px solid white; padding: 5px 10px; background-color: transparent; color: white;">Restaurar</button>
+    -->
+    
+    
+</div>
+</div>
+
+
+
+<script>
+//simula o clique no botão SALVAR JOGO e depois no CARREGAR O SAVE COLADO NA JANELA
+document.getElementById('restore-button').addEventListener('click', () => {
+    // Buscar o botão "Salvar Jogo" pelo ID
+    const salvarJogoBtn = document.getElementById('salvar1111');  // Usando o ID do botão
+    const carregarSaveBtn = document.querySelector("button[onclick='loadFromBackup()']");  // Supondo que o carregamento ainda esteja por onclick ou com outro seletor
+
+    // Simula o clique no botão "Salvar Jogo"
+    if (salvarJogoBtn) {
+        salvarJogoBtn.click();  // Simula o clique no botão "Salvar Jogo"
+    } else {
+        alert('Botão "Salvar Jogo" não encontrado!');
+    }
+
+    // Aguarda 1 segundo e então simula o clique no botão "Carregar o Save Colado na Janela"
+    setTimeout(() => {
+        if (carregarSaveBtn) {
+            carregarSaveBtn.click();  // Simula o clique no botão "Carregar o Save Colado na Janela"
+        } else {
+            alert('Botão "Carregar o Save Colado na Janela" não encontrado!');
+        }
+    }, 1000);  // 1 segundo de delay
+});
+</script>
+
+
+    </div>
+      
+      
+      
+
+
+<!--
+    <div class="controls">
+        <button onclick="adjustZoom('increase')">Mesa +</button>
+        <button onclick="adjustZoom('decrease')">Mesa -</button>
+    </div>
+
+
+
+        <div class="game-table">
+            <div class="decks-container">
+                <div class="deck">
+                    <img src="deck9/card1.jpeg" alt="Deck 9" class="deck-back" onclick="drawCard(9)" onerror="reloadDeckImage(this, 'deck9/deck-back.jpeg')">
+    <p>TILES</p>
+                    <p>MARCADORES</p>
+                    <button onclick="reshuffleDeck(9)">Embaralhar</button>
+                    <button onclick="openCardSelector(9)">Selecionar Carta</button>
+                </div>
+                <div class="deck">
+                    <img src="deck10/card1.jpeg" alt="Deck 10" class="deck-back" onclick="drawCard(10)" onerror="reloadDeckImage(this, 'deck10/deck-back.jpeg')">
+    <p>TILES</p>
+                    <p>MARCADORES</p>
+                    <button onclick="reshuffleDeck(10)">Embaralhar</button>
+                    <button onclick="openCardSelector(10)">Selecionar Carta</button>
+                </div>
+                <div class="deck">
+                    <img src="deck11/card1.jpeg" alt="Deck 11" class="deck-back" onclick="drawCard(11)" onerror="reloadDeckImage(this, 'deck11/deck-back.jpeg')">
+    <p>TILES</p>
+                    <p>MARCADORES</p>
+                    <button onclick="reshuffleDeck(11)">Embaralhar</button>
+                    <button onclick="openCardSelector(11)">Selecionar Carta</button>
+                </div>
+                    <div class="deck">
+                    <img src="deck14/card1.jpeg" alt="Deck 14" class="deck-back" onclick="drawCard(14)" onerror="reloadDeckImage(this, 'deck14/deck-back.jpeg')">
+    <p>TILES</p>
+                    <p>MARCADORES</p>
+                    <button onclick="reshuffleDeck(14)">Embaralhar</button>
+                    <button onclick="openCardSelector(14)">Selecionar Carta</button>
+                </div>
+                   <div class="deck">
+                    <img src="deck13/card1.jpeg" alt="Deck 13" class="deck-back" onclick="drawCard(13)" onerror="reloadDeckImage(this, 'deck13/deck-back.jpeg')">
+    <p>TILES</p>
+                    <p>MARCADORES</p>
+                    <button onclick="reshuffleDeck(13)">Embaralhar</button>
+                    <button onclick="openCardSelector(13)">Selecionar Carta</button>
+                </div>
+
+
+
+            </div>
+            </div>
+            
+-->
+
+
+
+
+
+
+
+
+
+<!--
+<br><br><br>
+<iframe width="" height="240" src="https://www.youtube.com/embed/gfOo5sohsZc" title="Mission Patrol - Gameplay Completa [Mesa Virtual]" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      -->
+          
+              <!--
+  <a href="https://docs.google.com/document/d/18CrweXMfdO4YQoPvHozWKeOmzcs3HTapR91KEIrM6Jg/edit?usp=drivesdk" 
+   target="_blank" 
+   style="color: white; background-color: #444; text-decoration: none; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s;"
+   onmouseover="this.style.backgroundColor='#666'; this.style.color='white';" 
+   onmouseout="this.style.backgroundColor='#444'; this.style.color='white';">
+   Anotações Pessoais (Não oficiais)
+   -->
+</a>
+
+ 
+ <!-- <a href="1.pdf" target="_blank">Variante Eventos e Combate [não oficial]</a> 
+<br><br>  -->
+
+
+
+
+
+<div>
+  
+
+
+
+<br><br><br>
+
+
+<div style="text-align: center;">
+<button id="new-game-btn" style="background-color: red; color: white; font-size: 14px; border: 2px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='darkred'" onmouseout="this.style.backgroundColor='red'">
+    NOVO JOGO
+</button>
+
+<!-- Botão para salvar no localStorage e gerar o texto de backup -->
+&nbsp;&nbsp;
+<button id="salvar1111" onclick="saveFullPage(); salvarTexto();" 
+        style="border: 2px solid white; padding: 5px 10px; background-color: transparent; color: white;">
+    Salvar Jogo
+</button><b>--</b><button onclick="reloadAndLoadPage()" style="border: 2px solid white; padding: 5px 10px; background-color: transparent; color: white;">Carregar Jogo</button>    <!-- Botão para carregar do localStorage -->
+</div>
+
+<br>
+
+<div style="text-align: center;">
+ <label for="fileInput" 
+       style="background-color: red; color: white; font-size: 14px; border: 2px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s ease;">
+    << CARREGAR ARQUIVO DE SAVE >>
+</label>
+<input type="file" id="fileInput" accept=".txt" onchange="carregarTexto()" style="display: none;" />
+</div>
+
+   <script>
+    function salvarTexto() {
+        let textArea = document.getElementById("backupText").value;
+        if (!textArea.trim()) {
+            alert("A área de texto está vazia!");
+            return;
+        }
+
+        // Capturar o título da página e sanitizar para um nome de arquivo válido
+        let titulo = document.title.trim() || "SaveGame";
+
+        // Remover caracteres inválidos para nomes de arquivos
+        titulo = titulo.replace(/[\/\\:*?"<>|]/g, "");  
+
+        // Substituir espaços e outros caracteres problemáticos por _
+        titulo = titulo.replace(/\s+/g, "_");
+
+        // Limitar o tamanho do nome do título (máximo de 15 caracteres)
+        titulo = titulo.substring(0, 15);
+
+        // Capturar data e hora atuais
+        let agora = new Date();
+        let dia = String(agora.getDate()).padStart(2, '0');
+        let mes = String(agora.getMonth() + 1).padStart(2, '0'); // Meses começam do zero
+        let ano = agora.getFullYear();
+        let horas = String(agora.getHours()).padStart(2, '0');
+        let minutos = String(agora.getMinutes()).padStart(2, '0');
+        let segundos = String(agora.getSeconds()).padStart(2, '0');
+
+        // Nome do arquivo no formato: [titulo]_DD-MM-YYYY_HH-MM-SS.txt
+        let nomeArquivo = `${titulo}_${dia}-${mes}-${ano}_${horas}-${minutos}-${segundos}.txt`;
+
+        // Criar arquivo e baixar
+        let blob = new Blob([textArea], { type: "text/plain" });
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+  function carregarTexto() {
+    let fileInput = document.getElementById("fileInput");
+    let file = fileInput.files[0];
+
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById("backupText").value = e.target.result;
+            
+            // Aguarda 1 segundo e então simula o clique no botão "Carregar o Save Colado na Janela"
+            setTimeout(() => {
+                let carregarSaveBtn = document.getElementById("carregarSavedaJanela");
+                if (carregarSaveBtn) {
+                    carregarSaveBtn.click();  // Simula o clique no botão "Carregar o Save Colado na Janela"
+                } else {
+                    alert('Botão "Carregar o Save Colado na Janela" não encontrado!');
+                }
+            }, 500);  // 0,5 segundo de delay
+        };
+        reader.readAsText(file);
+    }
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Caixa de Texto para Backup e Botões -->
+<!-- Caixa de Texto para Backup e Botões -->
+<div style="text-align: center;">
+<div style="margin-top: 20px;">
+    <textarea id="backupText" rows="10" cols="50" placeholder="   O Save aparecerá aqui..." 
+        style="display:none; border: 2px solid gray; padding: 5px;"></textarea>
+    <br>
+    
+    <button onclick="copyBackup()" 
+        style="display:none; border: 2px solid gray; padding: 5px 10px; background-color: transparent; color: white;">
+        Copiar Save da Janela para guardá-lo em algum local (Colar)
+    </button><span style="display:none; color: gray;"><b>--</b></span><button id="carregarSavedaJanela" onclick="loadFromBackup()" 
+        style="display:none; border: 2px solid gray; padding: 5px 10px; background-color: transparent; color: white;">
+        Carregar o Save Colado na Janela
+    </button>
+</div>
+       </div> 
+ 
+   <br><br>
+       
+<div style="display: flex; justify-content: center; gap: 10px;">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp
+<button id="setup-btn" style="margin-left: -300px; background-color: green; color: white; font-size: 14px; border: 2px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='darkgreen'" onmouseout="this.style.backgroundColor='green'">SETUP 1</button>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- botão para o setup2 incluido --> 
+<button id="setup2-btn" style="background-color: red; color: white; font-size: 14px; border: 2px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='darkred'" onmouseout="this.style.backgroundColor='red'">SETUP: <br>MOUNTAIN OF MADNESS</button>
+
+
+
+
+<!-- botão para o setup3 incluido --> 
+<div style="display: flex; justify-content: center; gap: 10px;">
+<button id="setup3-btn" style="margin-left: -300px; background-color: green; color: white; font-size: 14px; border: 2px solid white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='darkgreen'" onmouseout="this.style.backgroundColor='green'">SETUP 1</button>
+</div>
+
+</div>
+
+   
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ <!-- Pop-up para seleção de cartas -->
+    <div id="card-selector" class="card-selector hidden">
+        <div id="card-selector-content" class="card-selector-content"></div>
+        <button onclick="closeCardSelector()">Fechar</button>
+    </div>
+
+  
+
+
+
+
+
+<!-- Pop-up de opções para cartas -->
+<div id="card-options" class="card-options hidden">
+    <button id="duplicate-btn" onclick="duplicateCard()">Duplicar</button> <!-- Novo botão -->
+    <button id="delete-btn" onclick="deleteCard()">Enviar para o Deck de Descarte</button> <!-- Novo botão -->
+    <button id="lock-button" onclick="toggleLockCard()">Travar/Destravar no fundo da Mesa</button>
+   <!-- <button id="lockDeck-button" onclick="toggleLockDeck()">Travar/Destravar DECK</button> -->
+<!--    <button id="rotate-btn" onclick="rotateCard()">Rotacionar</button> -->
+    <button id="bring-to-front-btn"button id="flip-btn" onclick="flipCard()">Virar (frente/verso) Carta</button>
+    <button id="group-and-flip-btn" onclick="bringCardToFront()">Sempre no topo</button>
+    <button id="grouping-open-popup-btn" class="grouping-button" onclick="openGroupingOptions()">Agrupamento</button> 
+
+<!-- Botão de agrupamento -->
+<button id="resize-open-popup-btn" 
+        onclick="openResizeOptions_cartas()" 
+        style="background-color: #2C2C2C; color: white; padding: 10px 20px; font-size: 16px; border: 1px solid darkred; border-radius: 5px; transition: background-color 0.3s, border-color 0.3s;"
+        onmouseover="this.style.backgroundColor='darkred'; this.style.borderColor='white';"
+        onmouseout="this.style.backgroundColor='#2C2C2C'; this.style.borderColor='darkred';">
+    Redimensionar
+</button>
+
+
+
+
+
+
+    <button id="return-to-deck-btn" onclick="returnCardToDeck()">Recolher para o Deck à Esquerda</button> 
+<!--
+<button onclick="adjustZoom('increase')"> Mesa +</button>
+<button onclick="adjustZoom('decrease')"> Mesa - </button> 
+-->
+<!--<button id="reload-card-btn" onclick="reloadCardImage()">Recarregar Imagem</button> -->
+
+<button onclick="rotateCard(-22.5)" style="border: 2px solid orange;">Rotacionar Esquerda</button>
+<button onclick="rotateCard(22.5)" style="border: 2px solid orange;">Rotacionar Direita</button>
+
+<button id="mostrar-conteudo-btn">Mostrar Cartas desta pilha</button>
+
+<button id="track-btn" onclick="toggleCardTracking()">Rastrear: OFF</button>
+
+
+               
+<button onclick=" openPopupZoom(selectedCard); closeCardOptions(); " style="border: 2px solid white;">Expandir</button>
+<!--<button id="zoomButton" style="border: 2px solid white;">Zoom na Carta</button> -->
+<!-- <button onclick="rotateCardHorizontally()">Girar Carta Horizontalmente</button> -->
+
+<div id="color-button-wrapper" style="
+  display: inline-block;
+  padding: 2px; 
+  border-radius: 8px;
+  background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+">
+  <div style="
+    background-color: #111;
+    padding: 4px 10px; /* Reduzido para encaixar na nova barra slim */
+    border-radius: 6px;
+    display: flex;
+    flex-direction: row; /* A MÁGICA: Muda de 'column' para 'row' (linha) */
+    align-items: center;
+    gap: 8px; /* Espaço entre a palavra Cor e a barrinha */
+  ">
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <span style="color: white; font-size: 12px;">🎨</span>
+      <span style="color: white; font-size: 12px;">Cor</span>
+    </div>
+    <input type="range" min="0" max="360" value="0" oninput="applyHueToCard(this.value)" style="width: 80px; margin: 0; cursor: pointer;">
+  </div>
+</div>
+
+
+
+
+
+  <br> <button class="close-button" onclick="closeCardOptions()">Fechar</button>
+
+</div>
+
+
+
+
+<!-- Pop-up de opções para cartas 
+
+<div id="card-options" class="card-options hidden">
+    <button id="duplicate-btn" onclick="duplicateCard()">Duplicar</button> 
+    <button id="delete-btn" onclick="deleteCard()">Apagar</button> 
+    <button id="lock-button" onclick="toggleLockCard()">Travar/Destravar</button>
+    <button id="rotate-btn" onclick="rotateCard()">Rotacionar</button>
+    <button id="bring-to-front-btn" onclick="bringCardToFront()">Trazer para Frente</button>
+    <button id="flip-btn" onclick="flipCard()">Virar Carta</button>
+      <button id="resize-open-popup-btn" onclick="openResizeOptions_cartas()">Redimensionar</button>
+    <button id="reload-card-btn" onclick="reloadCardImage()">Recarregar Imagem</button>
+    <button class="close-button" onclick="closeCardOptions()">Fechar</button>
+</div>
+-->
+
+
+<!-- Pop-up de opções para dados -->
+<div id="card-options2" class="card-options hidden">
+
+<button onclick="rollAllDice()"style="border: 2px solid; 
+               border-image: linear-gradient(to right, red, orange, yellow, green, blue, purple) 1;">Rolar Todos os Dados da mesma Cor</button>
+
+  <!--  <button id="rotate-btn" onclick="rotateCard2()">Rotacionar</button> -->
+    <button id="resize-btn"  class="grouping-button" onclick="openResizeOptions()">Redimensionar</button> <!-- Botão Redimensionar abre função com sub botões -->
+    <button id="dice-select-btn" onclick="openDiceFaceOptions()">Escolher Face do Dado</button> <!-- Botão FACE abre função com sub opções -->
+<!--
+<button onclick="adjustZoom('increase')"> Mesa +</button> 
+<button onclick="adjustZoom('decrease')"> Mesa - </button> 
+-->
+<button id="delete-btn" onclick="deleteCard()">Apagar</button>
+
+
+<button id="grouping-open-popup-btn" class="grouping-button" onclick="openGroupingOptions()">Agrupamento</button> <!-- Botão de agrupamento -->
+ <button id="lock-button" onclick="toggleLockCard()">Travar/Destravar no fundo da Mesa</button>
+<button onclick="rotateCard(-1)" style="border: 2px solid orange;">Rotacionar Esquerda</button>
+<button onclick="rotateCard(1)" style="border: 2px solid orange;">Rotacionar Direita</button>
+<br> 
+ <button id="bring-to-front-btn" onclick="bringCardToFront()">Sempre no Topo</button>
+
+
+<div id="color-button-wrapper" style="
+  display: inline-block;
+  padding: 2px; 
+  border-radius: 8px;
+  background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+">
+  <div style="
+    background-color: #111;
+    padding: 4px 10px; /* Reduzido para encaixar na nova barra slim */
+    border-radius: 6px;
+    display: flex;
+    flex-direction: row; /* A MÁGICA: Muda de 'column' para 'row' (linha) */
+    align-items: center;
+    gap: 8px; /* Espaço entre a palavra Cor e a barrinha */
+  ">
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <span style="color: white; font-size: 12px;">🎨</span>
+      <span style="color: white; font-size: 12px;">Cor</span>
+    </div>
+    <input type="range" min="0" max="360" value="0" oninput="applyHueToCard(this.value)" style="width: 80px; margin: 0; cursor: pointer;">
+  </div>
+</div>
+
+
+
+
+<br> 
+<button class="close-button" onclick="closeCardOptions2()">Fechar</button>
+</div>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+//versão 1006 do sistema de UNDO - REDO
+let undoStack = []; // Pilha de UNDO
+let redoStack = []; // Pilha de REDO
+let tempoDeEspera = 10800000; // Tempo de espera para debounce 10800000ms=3horas
+let lastSavedState = ""; // Último estado salvo
+const MAX_UNDO_STACK_SIZE = 200; // Limite da pilha de UNDO
+let disableSaves = false; // Variável de controle para desativar os saves
+let preventNextSave = false; // Variável de controle para impedir o próximo save após duplo clique
+let isRestoringFromUndoRedo = false;
+
+// Variável de controle (deve estar no topo do script ou fora das funções)
+let debounceTimeout = null; 
+
+let isPointerDown = false;
+document.addEventListener('pointerdown', () => { isPointerDown = true; });
+document.addEventListener('pointerup', () => { isPointerDown = false; saveState(); });
+
+
+
+
+
+// Função para salvar o estado
+function saveState() {
+    // TRAVA MESTRA: Se o dedo/mouse estiver pressionado, CANCELA o salvamento.
+    // Só salvaremos quando o 'pointerup' disparar.
+    if (disableSaves || isRestoringFromUndoRedo || isPointerDown) return;
+    if (preventNextSave) { preventNextSave = false; return; }
+
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+        const tableArea = document.getElementById('table-area');
+        if (!tableArea) return;
+
+        // 1. Limpa o HTML para comparação (Sua lógica de cartasok)
+        let currentHTML = tableArea.innerHTML.replace(/border:\s*\d+px\s+dashed\s+blue;/g, '').trim();
+        
+        // 2. Pega a lousa (Lógica lousaok)
+        const currentLousa = (typeof exportarDesenhoLousa === 'function') ? exportarDesenhoLousa() : null;
+
+        // 3. Só grava se realmente houver mudança e se NÃO estivermos no meio de um movimento
+        if (currentHTML !== lastSavedState) {
+            undoStack.push({ html: currentHTML, lousa: currentLousa });
+            lastSavedState = currentHTML; 
+            redoStack.length = 0; 
+
+            if (undoStack.length > MAX_UNDO_STACK_SIZE) undoStack.shift();
+            updateUndoRedoButtons();
+            console.log("✅ Estado salvo apenas no final do movimento.");
+        }
+    }, 150); // 300ms após soltar o clique/toque
+}
+
+
+
+function undo() {
+    if (undoStack.length > 1) {
+        isRestoringFromUndoRedo = true;
+        
+        // --- LIMPEZA DE ESTADO PARA OS DADOS ---
+        isMoved = false; 
+        if (typeof startX !== 'undefined') startX = 0;
+        // ---------------------------------------
+
+        const tableArea = document.getElementById('table-area');
+        const htmlAtual = tableArea.innerHTML.replace(/border:\s*\d+px\s+dashed\s+blue;/g, '').trim();
+        const lousaAtual = (typeof exportarDesenhoLousa === 'function') ? exportarDesenhoLousa() : null;
+        redoStack.push({ html: htmlAtual, lousa: lousaAtual });
+
+        if (modoRegua && pontosReguaUndo.length > 0) {
+            if (ultimoPontoRegua) pontosReguaRedo.push({ x: ultimoPontoRegua.x, y: ultimoPontoRegua.y });
+            ultimoPontoRegua = pontosReguaUndo.pop();
+        } else if (modoRegua) {
+            ultimoPontoRegua = null;
+        }
+
+        undoStack.pop();
+        const prevState = undoStack[undoStack.length - 1];
+
+        tableArea.innerHTML = prevState.html;
+        lastSavedState = prevState.html;
+
+        setTimeout(() => {
+            if (prevState.lousa && typeof importarDesenhoLousa === 'function') {
+                importarDesenhoLousa(prevState.lousa);
+            }
+            
+            // Reatribui os eventos (Certifique-se que esta função chama reassignCardEvents)
+            reativarFuncionalidadesMesa();
+            
+            lastSavedState = tableArea.innerHTML.replace(/border:\s*\d+px\s+dashed\s+blue;/g, '').trim();
+            isRestoringFromUndoRedo = false;
+            updateUndoRedoButtons();
+            
+            // Reset final para garantir que o próximo clique seja limpo
+            isMoved = false;
+        }, 50); 
+    } else {
+        // --- ADICIONADO: AVISO DE LIMITE ---
+       // alert("Você já chegou no início do histórico. Não há mais o que desfazer!");
+          mostrarToast("Você já chegou no início do histórico. Não há mais o que desfazer!", "warning");
+
+    }
+}
+
+
+
+
+function redo() {
+    if (redoStack.length > 0) {
+        isRestoringFromUndoRedo = true;
+        
+        // --- LIMPEZA DE ESTADO PARA OS DADOS ---
+        isMoved = false; 
+        if (typeof startX !== 'undefined') startX = 0;
+        // ---------------------------------------
+
+        const tableArea = document.getElementById('table-area');
+        const nextState = redoStack.pop();
+        const htmlAtual = tableArea.innerHTML.replace(/border:\s*\d+px\s+dashed\s+blue;/g, '').trim();
+        const lousaAtual = (typeof exportarDesenhoLousa === 'function') ? exportarDesenhoLousa() : null;
+        undoStack.push({ html: htmlAtual, lousa: lousaAtual });
+
+        if (modoRegua && pontosReguaRedo.length > 0) {
+            if (ultimoPontoRegua) pontosReguaUndo.push({ x: ultimoPontoRegua.x, y: ultimoPontoRegua.y });
+            ultimoPontoRegua = pontosReguaRedo.pop();
+        }
+
+        tableArea.innerHTML = nextState.html;
+        lastSavedState = nextState.html;
+
+        setTimeout(() => {
+            if (nextState.lousa && typeof importarDesenhoLousa === 'function') {
+                importarDesenhoLousa(nextState.lousa);
+            }
+            
+            reativarFuncionalidadesMesa();
+            
+            lastSavedState = tableArea.innerHTML.replace(/border:\s*\d+px\s+dashed\s+blue;/g, '').trim();
+            isRestoringFromUndoRedo = false;
+            updateUndoRedoButtons();
+            
+            isMoved = false;
+        }, 50);
+    } else {
+        // --- ADICIONADO: AVISO DE LIMITE ---
+       // alert("Não há mais ações para refazer!");
+                 mostrarToast("Não há mais ações para refazer!", "warning");
+
+    }
+}
+
+
+
+
+
+// Função para atualizar os botões de UNDO e REDO
+function updateUndoRedoButtons() {
+    const undoButton = document.getElementById('undo-button');
+    const redoButton = document.getElementById('redo-button');
+
+    // NUNCA usamos .disabled = true, para que o clique sempre funcione e mostre o alerta
+    undoButton.disabled = false; 
+    redoButton.disabled = false;
+
+    // Controlamos a aparência visual (opacidade) em vez de travar o botão
+    if (undoStack.length <= 1) {
+        undoButton.style.opacity = "0.4";
+        undoButton.style.cursor = "default";
+    } else {
+        undoButton.style.opacity = "1";
+        undoButton.style.cursor = "pointer";
+    }
+
+    if (redoStack.length === 0) {
+        redoButton.style.opacity = "0.4";
+        redoButton.style.cursor = "default";
+    } else {
+        redoButton.style.opacity = "1";
+        redoButton.style.cursor = "pointer";
+    }
+}
+
+// Função para adicionar suporte apenas a clique nos botões (evita disparar ao deslizar no telemóvel)
+function setupUndoRedoButtons() {
+    const undoButton = document.getElementById('undo-button');
+    const redoButton = document.getElementById('redo-button');
+
+    if (undoButton && redoButton) {
+        undoButton.addEventListener("click", (event) => {
+            // Removemos o preventDefault para permitir o comportamento nativo de clique
+            undo();
+        });
+
+        redoButton.addEventListener("click", (event) => {
+            redo();
+        });
+    }
+}
+
+// Configura os botões de UNDO e REDO ao carregar a página
+document.addEventListener("DOMContentLoaded", setupUndoRedoButtons);
+
+
+
+
+
+
+// Observador de mudanças na tabela
+function setupTableObserver() {
+    const tableArea = document.getElementById('table-area');
+
+    const observer = new MutationObserver((mutations) => {
+        let stateChanged = false;
+
+        mutations.forEach((mutation) => {
+            if (mutation.type === "childList") {
+                mutation.addedNodes.forEach(node => console.log(`➕ Adicionado: ${node.nodeName}`));
+                mutation.removedNodes.forEach(node => console.log(`➖ Removido: ${node.nodeName}`));
+                stateChanged = true;
+            }
+
+            if (mutation.type === "attributes") {
+                // Verifica se o atributo alterado é 'data-rotation' ou 'data-flipped'
+                if (mutation.attributeName === "data-rotation" || mutation.attributeName === "data-flipped") {
+                    console.log(`⚙ Atributo alterado: ${mutation.attributeName}`);
+                    stateChanged = true;
+                }
+
+                // Ignora alterações de estilo em imagens
+                if (mutation.target.tagName === "IMG" && mutation.attributeName === "style") return;
+            }
+        });
+
+        if (stateChanged) {
+            debouncedSaveState(); // Chama a função de salvar o estado com debounce
+        }
+    });
+
+    observer.observe(tableArea, {
+        childList: true,  // Observa adições ou remoções de nós
+        subtree: true,    // Observa todos os elementos abaixo do tableArea
+        attributes: true, // Observa mudanças de atributos
+    });
+}
+
+
+
+
+// Variável para armazenar o tempo do último clique
+let lastClickTime = 0; 
+let isDoubleClick = false; // Variável para verificar se é um duplo clique
+
+// Eventos para salvar estado ao terminar ações do usuário com detecção de duplo clique
+document.getElementById('table-area').addEventListener('mouseup', (event) => {
+    const currentTime = new Date().getTime();
+    if (currentTime - lastClickTime <= 500) {  // Verifica se o tempo entre cliques é curto o suficiente para ser considerado um duplo clique
+        isDoubleClick = true; // Detecta duplo clique
+        console.log("⚠️ Duplo clique detectado.");
+        preventNextSave = true; // Impede o próximo save
+        return;  // Não executa o save para o clique simples
+    }
+    lastClickTime = currentTime;  // Atualiza o tempo do último clique
+
+    // Se não for duplo clique, executa o save
+    if (!isDoubleClick) {
+        saveState();
+    }
+});
+
+// Adiciona o mesmo comportamento para toque
+document.getElementById('table-area').addEventListener('touchend', (event) => {
+    const currentTime = new Date().getTime();
+    if (currentTime - lastClickTime <= 500) {  // Detecção de toque duplo
+        isDoubleClick = true; // Detecta duplo toque
+        console.log("⚠️ Duplo toque detectado.");
+        preventNextSave = true; // Impede o próximo save
+        return;  // Não executa o save para o toque simples
+    }
+    lastClickTime = currentTime;  // Atualiza o tempo do último toque
+
+    // Se não for duplo toque, executa o save
+    if (!isDoubleClick) {
+        saveState();
+    }
+});
+
+
+
+
+// ✅ NOVA FUNÇÃO: Captura cliques e toques em imagens FORA da mesa e salva o estado
+function setupOutsideImageClickListener() {
+    document.body.addEventListener("click", (event) => {
+            if (isRestoringFromUndoRedo) return;  // <-- bloqueia save durante UNDO/REDO
+
+        
+        const tableArea = document.getElementById("table-area");
+        const isInsideTable = tableArea.contains(event.target);  // Verifica se o clique foi dentro da mesa
+        const isImage = event.target.tagName === "IMG";  // Verifica se o alvo do clique é uma imagem
+        const isPopup = event.target.closest(".popup");  // Verifica se o clique ocorreu dentro de um popup
+
+        // Verifica se o clique foi fora da mesa ou em uma imagem/popup
+        if (!isInsideTable || isImage || isPopup) {
+            console.log("Clique fora da mesa ou em um popup. Salvando estado...");
+if (!isRestoringFromUndoRedo) {
+    saveState();
+}
+        }
+    });
+
+    // Adiciona suporte para toques em dispositivos móveis (touchstart)
+    document.body.addEventListener("touchstart", (event) => {
+           if (isRestoringFromUndoRedo) return;  // <-- bloqueia save durante UNDO/REDO
+
+       
+        const tableArea = document.getElementById("table-area");
+        const isInsideTable = tableArea.contains(event.target);  // Verifica se o toque foi dentro da mesa
+        const isImage = event.target.tagName === "IMG";  // Verifica se o alvo do toque é uma imagem
+        const isPopup = event.target.closest(".popup");  // Verifica se o toque ocorreu dentro de um popup
+
+        // Verifica se o toque foi fora da mesa ou em uma imagem/popup
+        if (!isInsideTable || isImage || isPopup) {
+            console.log("Toque fora da mesa ou em um popup. Salvando estado...");
+if (!isRestoringFromUndoRedo) {
+    saveState();
+}
+        }
+    });
+}
+
+// Função para restaurar a página
+function restorePage() {
+    console.log("Restaurando a página...");
+    saveState();
+    loadFromBackup();  // Supondo que você tenha essa função
+}
+
+// Salva o estado inicial ao carregar a página
+window.addEventListener('DOMContentLoaded', () => {
+    setupTableObserver();
+    setupOutsideImageClickListener(); // Ativa a nova funcionalidade chamando a função de ao clicar ou tocar numa imagem fora da mesa um save é realizado
+});
+
+
+
+
+function normalizeHTML(html) {
+    // Remove espaços extras, bordas visuais e normaliza aspas
+    return html
+        .replace(/\s+/g, ' ')                       // Remove espaços em excesso
+        .replace(/border:\s*\d+px\s+dashed\s+blue;/g, '') // Remove borda azul
+        .replace(/"/g, "'")                         // Uniformiza aspas
+        .trim();
+}
+
+
+</script>
+               
+                 
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- script que controla a aba a esquerda, ou seja o esconder a coluna da esquerda -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleButton = document.getElementById("toggleSidebar");
+
+    toggleButton.addEventListener("click", function () {
+        // Alterna uma classe no 'body', o CSS cuida de todo o resto (empurrar a mesa e o botão)
+        document.body.classList.toggle("sidebar-hidden");
+
+        // Troca o ícone baseando-se no estado
+        if (document.body.classList.contains("sidebar-hidden")) {
+            toggleButton.innerHTML = "▶"; // Ícone recolhido
+        } else {
+            toggleButton.innerHTML = "◀"; // Ícone expandido
+        }
+    });
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+<div style="display: flex; justify-content: center;">
+    <div style="text-align: center;">
+    
+   
+    
+    
+        <br><br><br>
+        Agradecimentos e Fontes:
+        <br>
+        <font size="1" style="font-size: 12px;">
+            Algumas imagens foram liberadas para uso no jogo pelo autor e depois retrabalhadas: 
+            <a href="https://www.miskasmaps.com/" target="_blank">
+                https://www.miskasmaps.com/
+            </a>
+        </font>
+        <br>
+        <font size="1" style="font-size: 12px;">
+    Algumas imagens foram conseguidas aqui e depois retrabalhadas: 
+    <a href="https://colecciondegifs.blogspot.com/2016/08/imagenes-de" target="_blank">
+        https://colecciondegifs.blogspot.com/2016/08/imagenes-de
+    </a>
+</font>
+        <br><br><br>
+         
+         
+         
+     <div style="padding-left: 25%; text-align: left;">
+  <font size="1" style="font-size: 12px;">
+    <strong>FUNÇÕES DIRETAS VIA TECLADO (Sugiro uso do Teclado Numérico Lateral):</strong><br><br>
+
+    [ SETAS ]; = Movimento fino da carta<br>
+    [ delete ]; = Manda carta para deck de descarte<br>
+    [ , ] = Manda carta para deck de descarte<br>
+    [ + ] = Aumenta o tamanho da carta<br>
+    [ - ] = Diminui o tamanho da carta<br>
+    [ CTRL + ] = Zoom + na mesa<br>
+    [ CTRL - ] = Zoom - na mesa<br>
+    [ SHIFT + ] = Soma +1 ao Dado<br>
+    [ SHIFT - ] = Subtrai 1 ao Dado<br>    
+    [ 4 ] = Rotaciona para a esquerda<br>
+    [ 6 ] = Rotaciona para a direita<br>
+    [ E ] = Abre popup com carta para visualizar melhor<br>
+    [ T ] = Trava ou destrava uma carta no fundo da mesa<br>
+    [ D ] = Duplica uma carta na mesa<br>
+    [ G ] = Agrupa Cartas sobrepostas para movimento da pilha<br>
+    [ 8 ] = Vira a carta, mostrando seu verso<br>  </font>
+</div>
+
+  
+       
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<script>
+// Abaixo está a função que coloca movimento pelo uso das teclas na carta selecionada!
+function isPC() {
+  const userAgent = navigator.userAgent;
+  return !(/Mobi|Android|iPhone|iPad|iPod|webOS|BlackBerry|Windows Phone/.test(userAgent));
+}
+
+// 🎲 FUNÇÃO SUPORTE EXTRAÍDA (Removida de dentro do switch para evitar erros de parsing)
+function executarLogicaTrocaFace(dado, direcao) {
+  const deckNumber = dado.getAttribute('data-deck');
+  const deckFaceMapping = { 16:6, 17:6, 18:6, 30:6, 31:6, 32:6, 33:6, 34:6, 41:4, 42:6, 45:20, 46:20, 47:8, 61:12 };
+  const numFaces = deckFaceMapping[deckNumber] || 6;
+
+  const currentSrc = dado.src.includes("back.jpeg") ? dado.getAttribute('data-original-src') : dado.src;
+  let match = currentSrc.match(/card(\d+)\.jpeg/);
+  let currentFace = match ? parseInt(match[1], 10) : 1;
+
+  if (direcao === 'mais') {
+      currentFace = currentFace < numFaces ? currentFace + 1 : 1;
+  } else {
+      currentFace = currentFace > 1 ? currentFace - 1 : numFaces;
+  }
+
+  const newPath = `deck${deckNumber}/card${currentFace}.jpeg`;
+  const finalSrc = `${newPath}?t=${new Date().getTime()}`;
+
+  dado.style.transition = "filter 0.3s ease"; 
+  dado.style.filter = "blur(15px) grayscale(50%)";
+
+  dado.onload = function() {
+      dado.style.filter = "none";
+      dado.onload = null;
+  };
+
+  dado.src = finalSrc;
+  dado.setAttribute('data-original-src', newPath);
+  dado.setAttribute('data-flipped', 'false');
+}
+
+// 🟨 HANDLER ISOLADO DO EVENTO DE TECLADO
+window.handleGlobalKeydown = function(e) {
+  // 🔥 CORREÇÃO: Verificação de edição deve ser a PRIMEIRA coisa a ser feita
+  const activeElement = document.activeElement;
+  const isEditing = activeElement.tagName === 'INPUT' || 
+                    activeElement.tagName === 'TEXTAREA' || 
+                    (activeElement.isContentEditable); // Captura o Post-it!
+
+  // Se estiver editando e a tecla for uma seta, sai imediatamente (ignora o resto da função)
+  if (isEditing && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    return; 
+  }
+
+  // Agora sim, após garantir que não estamos digitando, fazemos o resto:
+  console.log('🟨 Tecla pressionada:', e.key);
+
+  // Bloqueia o scroll da mesa APENAS se não estivermos editando
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+    console.log('🛑 Scroll da mesa bloqueado.');
+  }
+
+  // Interceptador para a barra de carimbos da lousa
+  const menuCarimbos = document.getElementById('lousa-stamp-scroll');
+  if (typeof lousaAtiva !== 'undefined' && lousaAtiva && menuCarimbos && menuCarimbos.style.display === 'flex') {
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          console.log('✏️ Definindo carimbo por teclado:', e.key);
+          carimboAtual = e.key; 
+          modoBorracha = false;
+          if (typeof globalCtx !== 'undefined' && globalCtx) {
+              globalCtx.globalCompositeOperation = 'source-over';
+          }
+          if (typeof window.recalculaPreviewLousa === 'function') {
+              window.recalculaPreviewLousa();
+          }
+      }
+      e.preventDefault();
+      return;
+  }
+
+  if (!window.selectedCard) {
+    console.log('🛑 Nenhuma carta selecionada.');
+    return;
+  }
+
+  const step = 1;
+  let deltaX = 0, deltaY = 0;
+
+  // Atalho CTRL + ] para zoom do grupo
+  if (e.ctrlKey && e.key === ']') {
+    console.log('🟩 CTRL + ] → zoom grupo aumentado');
+    zoomGroupSize('increase');
+    return;
+  }
+
+  switch (e.key) {
+    case 'ArrowUp':
+      deltaY = -step;
+      break;
+    case 'ArrowDown':
+      deltaY = step;
+      break;
+    case 'ArrowLeft':
+      deltaX = -step;
+      break;
+    case 'ArrowRight':
+      deltaX = step;
+      break;
+
+    case 'Delete':
+    case ',':
+      console.log('🗑️ Delete ou , → envia carta ao descarte');
+      deleteCard();
+      return;
+
+    case '+':
+    case '=':
+      if (e.ctrlKey) { 
+          e.preventDefault(); 
+          adjustZoom('increase');
+      } else if (e.shiftKey) { 
+          if (window.selectedCard && window.selectedCard.classList.contains('deck1menor-dado')) {
+              console.log('🎲 SHIFT + → Próxima face do dado');
+              executarLogicaTrocaFace(window.selectedCard, 'mais');
+              mostrarToast("Face do Dado +1!");
+          }
+      } else {
+          resizeCard('increase', window.selectedCard);
+          mostrarToast("Carta AUMENTADA!");
+      }
+      return;
+
+    case '-':
+      if (e.ctrlKey) { 
+          e.preventDefault(); 
+          adjustZoom('decrease');
+      } else if (e.shiftKey) {
+          if (window.selectedCard && window.selectedCard.classList.contains('deck1menor-dado')) {
+              console.log('🎲 SHIFT - → Face anterior do dado');
+              executarLogicaTrocaFace(window.selectedCard, 'menos');
+              mostrarToast("Face do Dado -1!");
+          }
+      } else {
+          resizeCard('decrease', window.selectedCard);
+          mostrarToast("Carta DIMINUIDA!");
+      }
+      return;
+      
+    case '4':
+      console.log('⟲ 4 → rotaciona esquerda');
+      rotateCard(-22.5);
+      return;
+
+    case '6':
+      console.log('⟳ 6 → rotaciona direita');
+      rotateCard(22.5);
+      return;
+
+    case '8':
+    case 'v':
+    case 'V':          
+      console.log('🔄 8 v V → vira carta (verso/frente)');
+      flipCard();
+      return;
+
+    case 'e':
+    case 'E':
+      console.log('🔍 E → abrir popup para visualizar');
+      openPopupZoom(window.selectedCard);
+      if (window.selectedCard) {
+        const mesa = document.getElementById('table-area');
+        if (mesa) {
+          mesa.setAttribute('tabindex', '0');
+          setTimeout(() => mesa.focus({ preventScroll: true }), 100);
+          console.log('✅ Foco restaurado à mesa sem pular a tela.');
+        }
+      }
+      return;
+
+    case 't':
+    case 'T':
+      console.log('🔒 T → trava/destrava carta');
+      toggleLockCard();
+      return;                
+      
+    case 'g':
+    case 'G':
+      console.log('G → Agrupa Cartas para move-las');
+      moveDeck();
+      return;
+      
+    case 'd':
+    case 'D':
+      console.log('📄 D → duplica carta');
+      duplicateCard();
+      return;
+
+    default:
+      console.log('🔘 Tecla sem função: ' + e.key);
+      return;
+  }
+
+  moveCardByKeyboard(deltaX, deltaY);
+};
+
+// ⌨️ FUNÇÃO AUXILIAR DE MOVIMENTAÇÃO
+function moveCardByKeyboard(deltaX, deltaY) {
+  const card = window.selectedCard;
+  if (!card) return;
+
+  const isLocked = card.getAttribute('data-locked') === 'true';
+  if (isLocked) {
+    console.log('🔒 Carta travada. Movimento bloqueado.');
+    return;
+  }
+
+  let left = parseFloat(card.style.left);
+  let top = parseFloat(card.style.top);
+
+  if (isNaN(left) || isNaN(top)) {
+    const rect = card.getBoundingClientRect();
+    const tableRect = document.getElementById('table-area').getBoundingClientRect();
+    left = rect.left - tableRect.left;
+    top = rect.top - tableRect.top;
+    card.style.position = 'absolute';
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
+  }
+
+  left += deltaX;
+  top += deltaY;
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+
+  card.style.opacity = '0.7';
+  if (window.keyboardMoveTimeout) clearTimeout(window.keyboardMoveTimeout);
+  window.keyboardMoveTimeout = setTimeout(() => {
+    card.style.opacity = '1';
+  }, 200);
+}
+
+// 🚀 ESSA É A FUNÇÃO CHAVE QUE REATIVA TUDO SEM DUPLICAR OUVINTES
+window.configurarTecladoMesa = function() {
+  if (isPC()) {
+    console.log("✅ Inicializando/Reativando controle por teclado de forma limpa...");
+    // Remove o listener anterior mapeado na window (evita acumular atalhos repetidos)
+    document.removeEventListener('keydown', window.handleGlobalKeydown);
+    // Adiciona o listener atualizado e higienizado
+    document.addEventListener('keydown', window.handleGlobalKeydown);
+  } else {
+    console.log("🛑 Dispositivo móvel detectado. Teclado desativado.");
+  }
+};
+
+// Executa automaticamente na primeira carga do index
+window.configurarTecladoMesa();
+</script>
+
+
+
+
+
+
+
+
+<script>
+//observador de boxshadows perdidas como duplicatas azuis ou ao colocar a carta na mesa douradas!
+setInterval(() => {
+    const mesa = document.getElementById('table-area');
+    const elementosNaMesa = mesa.querySelectorAll('*');
+
+    elementosNaMesa.forEach(elemento => {
+        if (elemento.style.boxShadow) {
+            elemento.style.boxShadow = '';
+            console.log('BoxShadow removido de um elemento');
+        }
+    });
+}, 2000);
+</script>
+
+
+<!--
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+-->
+
+    <script src="codigo.js"></script>
+
+
+
+
+
+
+
+
+
+<script>
+// 🔥 1. O MOTOR DA ANIMAÇÃO FICA AQUI FORA (Começa no milissegundo zero!)
+let mensagemBase = "AGUARDE! Carregando";
+let pontoCount = 0;
+
+const animarPontos = setInterval(() => {
+    const overlay = document.getElementById('loadingOverlay');
+    // Só anima se o overlay existir e estiver visível na página
+    if (overlay && overlay.style.display !== 'none') {
+        pontoCount = (pontoCount % 5) + 1; // Cicla de 1 a 5 pontos
+        const pontos = ".".repeat(pontoCount);
+        overlay.innerText = mensagemBase + pontos;
+    }
+}, 500);
+
+// 🔥 2. A LÓGICA DE VERIFICAÇÃO DE IMAGENS E TECLADO
+function waitUntilImagesFullyLoaded() {
+    const tableArea = document.getElementById('table-area');
+    const overlay = document.getElementById('loadingOverlay');
+
+    const fixBrokenImages = () => {
+        const images = tableArea.querySelectorAll('img');
+        let allLoaded = true;
+        let fixedCount = 0;
+        images.forEach(img => {
+            if (img.complete && img.naturalWidth === 0) {
+                allLoaded = false;
+                let retries = parseInt(img.getAttribute('data-retries') || '0');
+                if (retries < 3) {
+                    img.setAttribute('data-retries', retries + 1);
+                    fixedCount++;
+                    let baseSrc = img.getAttribute('data-original-src') || img.src.split('?')[0];
+                    if (img.getAttribute('data-flipped') === 'true' && !baseSrc.includes('back.jpeg')) {
+                        baseSrc = baseSrc.replace(/\.jpeg$/i, 'back.jpeg');
+                    }
+                    img.src = `${baseSrc}?retry=${new Date().getTime()}`;
+                }
+            } else if (!img.complete) {
+                allLoaded = false;
+            }
+        });
+        return allLoaded;
+    };
+
+    const interval = setInterval(() => {
+        if (fixBrokenImages()) {
+            clearInterval(interval);
+            
+            // Atualiza apenas a mensagem base, a animação que está lá fora encarrega-se do resto!
+            mensagemBase = "Reativando Teclado (5s)"; 
+
+            setTimeout(() => {
+                clearInterval(animarPontos); // Pára definitivamente os pontos
+                clearTimeout(timeout);
+                overlay.style.display = 'none';
+                
+                if (typeof window.configurarTecladoMesa === 'function') {
+                    window.configurarTecladoMesa();
+                    const primeiraCarta = tableArea.querySelector('.card');
+                    if (primeiraCarta) primeiraCarta.click();
+                }
+            }, 5000);
+        }
+    }, 1000);
+
+    const timeout = setTimeout(() => {
+        clearInterval(interval);
+        
+        // Atualiza a mensagem base para o estado de emergência
+        mensagemBase = "A ligação está lenta. A tentar estabilizar";
+        
+        setTimeout(() => {
+            clearInterval(animarPontos); // Pára os pontos
+            overlay.style.display = 'none';
+            
+            if (typeof window.configurarTecladoMesa === 'function') {
+                window.configurarTecladoMesa();
+                const primeiraCarta = tableArea.querySelector('.card');
+                if (primeiraCarta) primeiraCarta.click();
+            }
+            
+            const stillBroken = Array.from(tableArea.querySelectorAll('img')).some(img => img.naturalWidth === 0);
+            if (stillBroken) {
+                setInterval(fixBrokenImages, 5000);
+            }
+        }, 5000);
+    }, 25000);
+}
+
+// Dispara a lógica de imagens apenas quando a estrutura carregar
+window.addEventListener('load', () => {
+    waitUntilImagesFullyLoaded();
+});
+</script>
+
+<!-- Overlay de carregamento -->
+<div id="loadingOverlay" style="
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    font-size: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999999999;
+">
+    AGUARDE! Carregando...
+</div>
+
+
+
+
+
+
+
+
+
+<button id="shuffle-button">Embaralhar setup</button>
+
+<script>
+
+
+document.getElementById("shuffle-button").addEventListener("click", () => {
+    console.log("Iniciando Setup Auto-Adaptável com Efeito Visual e Radar de Servidor...");
+
+    // ================= CONFIGURAÇÃO =================
+    const DECKS_PARA_EMBARALHAR = [0];      
+    const DECKS_PARA_ROTACIONAR = [0];         
+    const DECKS_PARA_VIRAR_ALEATORIO = [0]; 
+    // ================================================
+
+    const todosDecks = [...new Set([...DECKS_PARA_EMBARALHAR, ...DECKS_PARA_ROTACIONAR, ...DECKS_PARA_VIRAR_ALEATORIO])];
+
+    const executarSetupFinal = () => {
+        // 1. APLICAMOS O BLUR AQUI (Garante que só borra as cartas que já existem)
+        todosDecks.forEach(deckId => {
+            document.querySelectorAll(`#table-area .card[data-deck='${deckId}']`).forEach(c => {
+                c.classList.add('loading-dice');
+            });
+        });
+
+        todosDecks.forEach(deckId => {
+            const cartasFisicas = Array.from(document.querySelectorAll(`#table-area .card[data-deck='${deckId}']`));
+            if (cartasFisicas.length === 0) return;
+
+            // DESCOBERTA AUTOMÁTICA DE ARQUIVOS ÚNICOS
+            let imagensEncontradas = cartasFisicas.map(c => c.getAttribute("data-original-src")).filter(src => src !== null);
+            let bibliotecaUnica = [...new Set(imagensEncontradas)];
+
+            // MISTURA DA BIBLIOTECA
+            if (DECKS_PARA_EMBARALHAR.includes(deckId)) {
+                for (let i = bibliotecaUnica.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [bibliotecaUnica[i], bibliotecaUnica[j]] = [bibliotecaUnica[j], bibliotecaUnica[i]];
+                }
+            }
+
+            // APLICAÇÃO NOS SLOTS
+            cartasFisicas.forEach((slot, index) => {
+                const imagemSorteada = bibliotecaUnica[index % bibliotecaUnica.length];
+                const ext = imagemSorteada.toLowerCase().includes(".jpeg") ? ".jpeg" : ".jpg";
+                const versoCaminho = imagemSorteada.includes("back") ? imagemSorteada : imagemSorteada.replace(ext, `back${ext}`);
+
+                let rot = 0;
+                if (DECKS_PARA_ROTACIONAR.includes(deckId)) {
+                    rot = Math.random() < 0.5 ? 0 : 180;
+                }
+
+                let virada = slot.getAttribute("data-flipped") === "true";
+                if (DECKS_PARA_VIRAR_ALEATORIO.includes(deckId)) {
+                    const chance = Math.random() * 0.6 + 0.2;
+                    virada = Math.random() < chance;
+                }
+
+                // ATUALIZAÇÃO DO DOM
+                slot.setAttribute("data-original-src", imagemSorteada);
+                slot.setAttribute("data-flipped", virada.toString());
+                slot.setAttribute("data-rotation", rot.toString());
+                slot.style.transform = `rotate(${rot}deg)`;
+                
+                // Troca a imagem e remove o blur quando carregar
+                slot.src = virada ? versoCaminho : imagemSorteada;
+                
+                // Pequeno atraso para o usuário ver o efeito antes de limpar
+                setTimeout(() => {
+                    slot.classList.remove('loading-dice');
+                }, 300);
+            });
+        });
+
+        console.log("✅ Setup concluído com efeito visual.");
+    };
+
+    // ====== RADAR DE SERVIDOR (Substitui o setTimeout fixo) ======
+    let tentativas = 0;
+    const maxTentativas = 50; // Tenta por até 10 segundos (50 x 200ms)
+
+    const verificarSeServidorCarregou = () => {
+        // Pegamos o primeiro deck da lista para usar como referência
+        const deckReferencia = todosDecks[0];
+        
+        // Verifica se a carta existe E se o Setup já colocou o "data-original-src" nela
+        const cartasProntas = document.querySelectorAll(`#table-area .card[data-deck='${deckReferencia}'][data-original-src]`);
+
+        if (cartasProntas.length > 0) {
+            console.log("✅ Cartas detectadas! O servidor terminou de carregar.");
+            // Dá um fôlego extra de 300ms só para o DOM renderizar visualmente e executa
+            setTimeout(executarSetupFinal, 300); 
+        } else if (tentativas < maxTentativas) {
+            tentativas++;
+            console.log(`⏳ Aguardando servidor... (Tentativa ${tentativas}/50)`);
+            setTimeout(verificarSeServidorCarregou, 200); // Tenta de novo em 200ms
+        } else {
+            console.error("⛔ Tempo esgotado: O servidor está muito lento ou as cartas não foram criadas.");
+        }
+    };
+
+    // Dá o play no radar
+    verificarSeServidorCarregou();
+});
+
+
+
+
+
+
+
+
+
+
+
+//-------------//
+
+function ativarMesaQuandoEstiverPronta() {
+    console.log("Aguardando carregamento dos elementos da mesa...");
+
+    const checkExist = setInterval(() => {
+        const cards = document.querySelectorAll('.card');
+        const popups = document.querySelectorAll('.popup-zoom');
+
+        if (cards.length > 0 || popups.length > 0) {
+            clearInterval(checkExist);
+
+            // 1. TRATAMENTO DOS POPUPS (Isolado da Mesa)
+            popups.forEach(p => {
+                p.classList.add('popup-loading');
+                if (!p.querySelector('.aviso-carregando')) {
+                    const aviso = document.createElement('div');
+                    aviso.className = 'aviso-carregando';
+                    aviso.innerText = '⌛ Invocando visões...';
+                    p.appendChild(aviso);
+                }
+
+                const img = p.querySelector('img');
+                // Captura os dados de scroll que salvamos no dataset
+                const sLeft = p.dataset.pendingScrollLeft || img?.dataset.pendingScrollLeft;
+                const sTop = p.dataset.pendingScrollTop || img?.dataset.pendingScrollTop;
+
+                const ajustarEstePopup = () => {
+                    if (sLeft !== undefined || sTop !== undefined) {
+                        const container = p.querySelector('.img-container') || p;
+                        container.scrollLeft = parseInt(sLeft);
+                        container.scrollTop = parseInt(sTop);
+                    }
+                    p.classList.remove('popup-loading');
+                    const av = p.querySelector('.aviso-carregando');
+                    if (av) av.remove();
+                };
+
+                // Se a imagem do popup ainda não carregou (servidor lento), espera ELA
+                if (img && !img.complete) {
+                    img.addEventListener('load', ajustarEstePopup, { once: true });
+                } else {
+                    // Se já carregou ou não tem imagem, ajusta com um pequeno delay
+                    setTimeout(ajustarEstePopup, 500);
+                }
+            });
+
+            // 2. RESTAURAÇÃO DA MESA (CÓDIGO ORIGINAL SEU - INTEGRAL)
+            setTimeout(() => {
+                reativarFuncionalidadesMesa();
+
+                if (window.cameraRestauracaoMesa) {
+                    const cam = window.cameraRestauracaoMesa;
+                    const tableWrapper = document.getElementById('table-wrapper');
+                    const tableArea = document.getElementById('table-area');
+                    const allImages = document.querySelectorAll('img');
+                    let loadedCount = 0;
+                    const totalImages = allImages.length;
+
+                    const iniciarScrolls = () => {
+                        if (cam.zoom) {
+                            zoomLevel = parseFloat(cam.zoom);
+                            tableArea.style.transformOrigin = '0 0';
+                            tableArea.style.transform = `scale(${zoomLevel})`;
+                        }
+
+                        setTimeout(() => {
+                            let tentativas = 0;
+                            const radarScroll = setInterval(() => {
+                                tableWrapper.scrollLeft = parseInt(cam.scrollLeft || 0);
+                                tableWrapper.scrollTop = parseInt(cam.scrollTop || 0);
+
+                                const erroX = Math.abs(tableWrapper.scrollLeft - (cam.scrollLeft || 0));
+                                const erroY = Math.abs(tableWrapper.scrollTop - (cam.scrollTop || 0));
+
+                                if ((erroX < 5 && erroY < 5) || tentativas > 30) {
+                                    clearInterval(radarScroll);
+                                    window.cameraRestauracaoMesa = null;
+                                }
+                                tentativas++;
+                            }, 100);
+                        }, 150);
+                    };
+
+                    if (totalImages === 0) {
+                        iniciarScrolls();
+                    } else {
+                        allImages.forEach(img => {
+                            if (img.complete) {
+                                loadedCount++;
+                                if (loadedCount === totalImages) iniciarScrolls();
+                            } else {
+                                img.addEventListener('load', () => {
+                                    loadedCount++;
+                                    if (loadedCount === totalImages) iniciarScrolls();
+                                }, { once: true });
+                                img.addEventListener('error', () => {
+                                    loadedCount++; 
+                                    if (loadedCount === totalImages) iniciarScrolls();
+                                }, { once: true });
+                            }
+                        });
+                    }
+                }
+            }, 100);
+        }
+    }, 200);
+
+    setTimeout(() => { clearInterval(checkExist); }, 15000);
+}
+
+// Chame a função para iniciar a monitorização logo que o script carregar
+ativarMesaQuandoEstiverPronta();
+
+
+
+
+
+
+</script>
+
+
+
+<script>
+// Inicia a lousa ao carregar a página
+window.addEventListener('load', initLousaGlobal);
+</script>
+
+
+
+
+
+<div id="inspectorPanel" class="inspector-drawer">
+    
+    <div class="drawer-tab" onclick="toggleCombatPanel()">⚔️</div>
+
+    <div class="inspector-header">
+        <h2>Painel de Combate</h2>
+        <button class="close-btn" onclick="closeInspector()">X</button>
+    </div>
+    
+    
+    
+    <div class="combat-section hero-section" style="flex-shrink: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">🛡️ Status do Herói</h3>
+            <span id="turnDisplay" style="color: gold; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);">TURNO: 1</span>
+        </div>
+        
+        
+        
+        <div class="stat-row">
+            <span class="stat-label">Vida (HP):</span>
+            <div class="counter-control">
+                <button class="btn-minus" onclick="adjustHeroHp(-1)">-</button>
+                <span id="heroHpDisplay" class="display-value">0/200</span>
+                <button class="btn-plus" onclick="adjustHeroHp(1)">+</button>
+            </div>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">Dano Base:</span>
+            <div class="counter-control">
+                <button class="btn-minus" onclick="adjustHeroDmg(-1)">-</button>
+                <span id="heroDmgDisplay" class="display-value">0</span>
+                <button class="btn-plus" onclick="adjustHeroDmg(1)">+</button>
+            </div>
+        </div>
+
+       <!-- Cabeçalho do botão de notas -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+    <h4 style="margin: 0;">📝 Notas do Herói</h4>
+    <button id="toggleHeroNotesBtn" onclick="toggleHeroNotes()" style="cursor: pointer; background: #333; color: white; border: none; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem;">Esconder</button>
+</div>
+
+<!-- Container específico para o campo de notas -->
+<div id="heroNotesContainer" style="display: block;">
+    <textarea id="heroNotes" 
+              class="notes-area" 
+              placeholder="Anotações do herói..." 
+              onfocus="if(typeof deselectCard === 'function') { deselectCard(); console.log('🎨 Editando texto: Carta desselecionada.'); }">
+    </textarea>
+</div>
+
+
+
+    </div>
+
+    <hr class="section-divider">
+
+    <button class="btn-add-enemy" onclick="addNewEnemy()">+</button>
+
+    <div class="enemies-scroll-area" id="enemiesContainer" style="flex: 1; overflow-y: auto; padding-top: 15px;">
+        </div>
+
+</div>
+
+
+<script>
+// --- ESTADO DO HERÓI ---
+let heroHp = 0;
+let heroMaxHp = 200;
+let heroDmg = 0;
+
+// --- ESTADO DOS INIMIGOS DINÂMICOS ---
+let enemiesData = {}; // Guarda os dados de cada inimigo gerado
+let enemyCounter = 0; // Cria IDs únicos (0, 1, 2, 3...)
+
+// --- CONTROLE DO PAINEL LATERAL ---
+function toggleCombatPanel() {
+    const panel = document.getElementById('inspectorPanel');
+    panel.classList.toggle('active');
+    
+    
+    // --- ADICIONE ESTAS LINHAS AQUI ---
+    // Verifica se a classe 'active' foi adicionada (ou seja, o painel abriu)
+    if (panel.classList.contains('active')) {
+        if (typeof deselectCard === 'function') {
+            deselectCard();
+            console.log("🎨 Lousa aberta: Carta desselecionada.");
+        }
+    }
+    // ----------------------------------
+
+    updateHeroDisplay();
+}
+
+
+function closeInspector() {
+    document.getElementById('inspectorPanel').classList.remove('active');
+}
+
+// --- LÓGICA DO HERÓI ---
+function updateHeroDisplay() {
+    document.getElementById('heroHpDisplay').innerText = `${heroHp}/${heroMaxHp}`;
+    document.getElementById('heroDmgDisplay').innerText = heroDmg;
+}
+
+function adjustHeroHp(amount) {
+    heroHp = Math.max(0, Math.min(heroMaxHp, heroHp + amount));
+    updateHeroDisplay();
+}
+
+function adjustHeroDmg(amount) {
+    heroDmg = Math.max(0, heroDmg + amount);
+    updateHeroDisplay();
+}
+
+// --- LÓGICA DE INIMIGOS (GERADOR DINÂMICO) ---
+function addNewEnemy() {
+    const id = enemyCounter++; // Pega um ID único e soma 1 pro próximo
+    
+    // Registra os status iniciais na nossa lista de dados
+    enemiesData[id] = { hp: 0, maxHp: 200, str: 0 };
+
+    const container = document.getElementById('enemiesContainer');
+
+    // Estrutura HTML do card do novo inimigo
+    const enemyCardHtml = `
+        <div class="combat-section enemy-section" id="enemyCard-${id}" style="margin-bottom: 20px; border: 1px solid #333; padding: 12px; border-radius: 8px; background-color: #1e1e24; border-left: 4px solid #f97316;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="margin: 0; color: #fdba74; font-size: 1rem;">😈 Inimigo ${id + 1}</h3>
+                <button onclick="removeEnemy(${id})" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 4px; cursor: pointer; padding: 2px 8px; font-size: 0.75rem;">Remover</button>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">Vida (HP):</span>
+                <div class="counter-control">
+                    <button class="btn-minus" onclick="adjustDynEnemyHp(${id}, -1)">-</button>
+                    <span id="enemyHpDisplay-${id}" class="display-value">0/200</span>
+                    <button class="btn-plus" onclick="adjustDynEnemyHp(${id}, 1)">+</button>
+                </div>
+            </div>
+            
+            <div class="stat-row">
+                <span class="stat-label">Dano Base:</span>
+                <div class="counter-control">
+                    <button class="btn-minus" onclick="adjustDynEnemyStr(${id}, -1)">-</button>
+                    <span id="enemyStrDisplay-${id}" class="display-value">0</span>
+                    <button class="btn-plus" onclick="adjustDynEnemyStr(${id}, 1)">+</button>
+                </div>
+            </div>
+
+<textarea id="enemyNotes-${id}" class="notes-area" placeholder="Anotações deste inimigo..." onfocus="if(typeof deselectCard === 'function') { deselectCard(); console.log('🎨 Editando texto: Carta desselecionada.'); }"></textarea>
+    `;
+
+    // Insere o html no final da barra de rolagem, sem apagar os que já existem
+    container.insertAdjacentHTML('beforeend', enemyCardHtml);
+}
+
+// Remove o inimigo específico da tela e da memória
+function removeEnemy(id) {
+    delete enemiesData[id];
+    const card = document.getElementById(`enemyCard-${id}`);
+    if(card) card.remove();
+}
+
+// Altera a vida apenas do inimigo clicado
+function adjustDynEnemyHp(id, amount) {
+    if(!enemiesData[id]) return;
+    enemiesData[id].hp = Math.max(0, Math.min(enemiesData[id].maxHp, enemiesData[id].hp + amount));
+    document.getElementById(`enemyHpDisplay-${id}`).innerText = `${enemiesData[id].hp}/${enemiesData[id].maxHp}`;
+}
+
+// Altera a força apenas do inimigo clicado
+function adjustDynEnemyStr(id, amount) {
+    if(!enemiesData[id]) return;
+    enemiesData[id].str = Math.max(0, enemiesData[id].str + amount);
+    document.getElementById(`enemyStrDisplay-${id}`).innerText = enemiesData[id].str;
+}
+
+// Vinculação global das funções
+window.toggleCombatPanel = toggleCombatPanel;
+window.closeInspector = closeInspector;
+window.adjustHeroHp = adjustHeroHp;
+window.adjustHeroDmg = adjustHeroDmg;
+window.addNewEnemy = addNewEnemy;
+window.removeEnemy = removeEnemy;
+window.adjustDynEnemyHp = adjustDynEnemyHp;
+window.adjustDynEnemyStr = adjustDynEnemyStr;
+
+
+
+
+
+//FUNÇÃO para ESCONDER ou RESTAURAR area de texto da aba de combate com botao
+function toggleHeroNotes() {
+    const container = document.getElementById('heroNotesContainer');
+    const btn = document.getElementById('toggleHeroNotesBtn');
+    
+    if (container.style.display === "none") {
+        container.style.display = "block";
+        btn.innerText = "Esconder";
+    } else {
+        container.style.display = "none";
+        btn.innerText = "Mostrar Notas";
+    }
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+<script>
+//função que uso no botão de setup atual 
+document.addEventListener("DOMContentLoaded", function() {
+    const btnSetup3 = document.getElementById("setup3-btn");
+    
+    if (btnSetup3) {
+        btnSetup3.addEventListener("click", async () => {
+            try {
+                console.log("Iniciando carregamento automático...");
+                
+                // O '?t=' + Date.now() força o navegador a buscar o arquivo novo, ignorando o cache
+                const response = await fetch('setup_1.txt?t=' + Date.now());
+                
+                if (!response.ok) {
+                    throw new Error('Arquivo setup_1.txt não encontrado! Verifique se ele está na pasta.');
+                }
+                
+                const conteudo = await response.text();
+                
+                // Coloca o texto na caixa de backup (id="backupText")
+                const backupBox = document.getElementById("backupText");
+                if (!backupBox) throw new Error("Caixa de backup (backupText) não encontrada!");
+                
+                backupBox.value = conteudo;
+                
+                // Chama a função original que carrega o save (loadFromBackup)
+                // Se a sua função de carga for lenta, adicionamos um pequeno delay
+                if (typeof loadFromBackup === 'function') {
+                    console.log("Conteúdo carregado, disparando loadFromBackup...");
+                    loadFromBackup();
+                    alert("Setup 2 carregado com sucesso!");
+                } else {
+                    throw new Error("A função 'loadFromBackup' não foi encontrada no seu código.");
+                }
+                
+            } catch (erro) {
+                console.error("Erro no SETUP 2:", erro);
+                alert("Erro: " + erro.message);
+            }
+        });
+    } else {
+        console.error("Botão setup3-btn não encontrado no HTML!");
+    }
+});
+</script>
+
+
+
+
+
+
+
+
+
+<div id="floating-turn-btn" style="position: fixed; left: 20px; bottom: 80px; z-index: 100000; background: rgba(20, 20, 25, 0.95); border: 2px solid gold; border-radius: 8px; padding: 5px 10px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.6); user-select: none;">
+    <div id="turn-drag-handle" style="width: 100%; text-align: center; font-size: 10px; color: gold; border-bottom: 1px solid rgba(255,215,0,0.3); margin-bottom: 5px; padding-bottom: 2px; cursor: grab;">
+        ✋ Mover
+    </div>
+    <button onclick="advanceTurn()" style="background: darkred; border: 1px solid white; border-radius: 4px; color: white; font-weight: bold; font-size: 12px; cursor: pointer; padding: 5px 10px; transition: background 0.2s;">
+        TURNO FINALIZADO
+    </button>
+</div>
+
+<script>
+// --- LÓGICA DO CONTADOR DE TURNOS ---
+let currentTurn = 1;
+
+function advanceTurn() {
+    currentTurn++;
+    updateTurnDisplay();
+    processarContadoresDeTurno();
+}
+
+function updateTurnDisplay() {
+    const turnEl = document.getElementById('turnDisplay');
+    if (turnEl) turnEl.innerText = `TURNO: ${currentTurn}`;
+}
+
+// --- O MOTOR QUE LÊ E ATUALIZA AS ANOTAÇÕES ---
+function processarContadoresDeTurno() {
+    const textAreas = [];
+    const heroNotes = document.getElementById('heroNotes');
+    if (heroNotes) textAreas.push(heroNotes);
+    if (typeof enemiesData !== 'undefined') {
+        Object.keys(enemiesData).forEach(id => {
+            const enemyNotes = document.getElementById(`enemyNotes-${id}`);
+            if (enemyNotes) textAreas.push(enemyNotes);
+        });
+    }
+
+    // 🌟 SUPER REGEX: Agora entende variáveis em qualquer posição (Base, Modificador, Tempo, Alvo)
+    const regexPeriodico = /\[\[\s*(?:\$?([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)\s*={1,2}\s*)?(?:\((-?\d+(?:\.\d+)?)\)(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)|(-?\d+(?:\.\d+)?))\s*([+\-*/])\s*(?:\((-?\d+(?:\.\d+)?)\)(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)|(-?\d+(?:\.\d+)?))(.*?)\|\s*(\d+)\/(\d+)\s*\]\]/g;
+
+    function aplicarRiscado(texto) {
+        return texto.split('').map(char => char + '\u0336').join('');
+    }
+
+    textAreas.forEach(area => {
+        let linhas = area.value.split('\n');
+        let areaModificada = false;
+        let varsParaAtualizar = {}; 
+
+        for (let i = 0; i < linhas.length; i++) {
+            let linha = linhas[i];
+            if (linha.includes('\u0336') || linha.includes('✅') || linha.includes('⚠️ ERRO')) continue;
+
+            let linhaAlterada = linha;
+            let dispararAviso = false;
+
+            if (linhaAlterada.includes('⏰')) {
+                if (regexPeriodico.test(linhaAlterada)) {
+                    linhaAlterada = linhaAlterada.replace(regexPeriodico, (match, targetVar, baseVVar, baseToken, baseVPure, operador, modVVar, modToken, modVPure, miolo, tempoAtualStr, tempoMaxStr) => {
+                        
+                        let v = parseFloat(baseVVar !== undefined ? baseVVar : baseVPure);
+                        let modVal = parseFloat(modVVar !== undefined ? modVVar : modVPure);
+                        let max = parseInt(tempoMaxStr);
+                        let t = parseInt(tempoAtualStr) + 1; 
+
+                        // Extrai o alvo do miolo (Suporta número puro ou variável)
+                        let alvoReg = /(?:\((-?\d+(?:\.\d+)?)\)(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)|(-?\d+(?:\.\d+)?))a/;
+                        let matchAlvo = miolo.match(alvoReg);
+                        let alvoRegressivo = null;
+                        let alvoProgressivo = null;
+
+                        if (matchAlvo) {
+                            let alvoVal = parseFloat(matchAlvo[1] !== undefined ? matchAlvo[1] : matchAlvo[3]);
+                            if (operador === '-' || operador === '/') alvoRegressivo = alvoVal;
+                            else alvoProgressivo = alvoVal;
+                        }
+
+                        if (t > max) {
+                            if (operador === '+') v += modVal;
+                            else if (operador === '-') v -= modVal;
+                            else if (operador === '*') v *= modVal;
+                            else if (operador === '/') v = v / modVal;
+                            
+                            t = 1;    
+                            if (targetVar) varsParaAtualizar[targetVar.toLowerCase()] = v;
+                            // Se a base for uma variável e não estiver congelada com $, atualiza a global dela!
+                            if (baseToken && !baseToken.startsWith('$')) varsParaAtualizar[baseToken.toLowerCase()] = v;
+                        }
+
+                        if (alvoRegressivo !== null && v <= alvoRegressivo) {
+                            v = alvoRegressivo; dispararAviso = true;
+                            if (targetVar) varsParaAtualizar[targetVar.toLowerCase()] = v;
+                            if (baseToken && !baseToken.startsWith('$')) varsParaAtualizar[baseToken.toLowerCase()] = v;
+                        } else if (alvoProgressivo !== null && v >= alvoProgressivo) {
+                            v = alvoProgressivo; dispararAviso = true;
+                            if (targetVar) varsParaAtualizar[targetVar.toLowerCase()] = v;
+                            if (baseToken && !baseToken.startsWith('$')) varsParaAtualizar[baseToken.toLowerCase()] = v;
+                        }
+
+                        let targetStr = targetVar ? `$${targetVar} = ` : ''; 
+                        let valDisplay = baseToken ? `(${v})${baseToken}` : v;
+                        let modDisplay = modToken ? `(${modVal})${modToken}` : modVal;
+
+                        return `[[ ${targetStr}${valDisplay} ${operador} ${modDisplay}${miolo}| ${t}/${max} ]]`;
+                    });
+                }
+            }
+
+            if (dispararAviso) {
+                let textoLimpo = linhaAlterada.replace(/\[\[.*?\]\]/g, '').replace('⏰', '').trim();
+                if (textoLimpo === "") textoLimpo = "Efeito finalizado!";
+                
+                if (typeof aplicarRiscado === 'function') {
+                    linhaAlterada = "✅ " + aplicarRiscado(textoLimpo + " [CONCLUÍDO]");
+                } else {
+                    linhaAlterada = "✅ ~~" + textoLimpo + " [CONCLUÍDO]~~";
+                }
+                
+                setTimeout(() => { 
+                    if (typeof mostrarToast === 'function') mostrarToast(`⏰ ALVO ALCANÇADO: ${textoLimpo}`, 'warning'); 
+                }, 800);
+            }
+
+            if (linha !== linhaAlterada) { 
+                linhas[i] = linhaAlterada; 
+                areaModificada = true; 
+            }
+        }
+        
+        if (Object.keys(varsParaAtualizar).length > 0) {
+            for (let j = 0; j < linhas.length; j++) {
+                
+                // 🌟 A MÁGICA EM TEMPO DE TURNO: Se uma variável foi afetada, varre a tela atualizando seus valores (ignorando os com $)
+                const regexUpdateDynTurn = /\((-?\d+(?:\.\d+)?)\)([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)/g;
+                linhas[j] = linhas[j].replace(regexUpdateDynTurn, (match, oldVal, varName) => {
+                    let key = varName.toLowerCase();
+                    if (varsParaAtualizar[key] !== undefined) {
+                        areaModificada = true;
+                        return `(${varsParaAtualizar[key]})${varName}`;
+                    }
+                    return match;
+                });
+
+                const regexDeclNormal = /\[\[\s*\$([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)\s*={1,2}\s*(-?\d+(?:\.\d+)?)(?:\s*[+\-*/].*)?\]\]/g;
+                linhas[j] = linhas[j].replace(regexDeclNormal, (match, nomeVar, oldVal) => {
+                    let key = nomeVar.toLowerCase();
+                    if (varsParaAtualizar[key] !== undefined && !match.includes('+') && !match.includes('-') && !match.includes('*') && !match.includes('/')) {
+                        areaModificada = true;
+                        return `[[$${nomeVar} = ${varsParaAtualizar[key]}]]`;
+                    }
+                    return match;
+                });
+
+                const regexDeclInvertida = /\[\[\s*(-?\d+(?:\.\d+)?)\s*={1,2}\s*\$([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)\s*\]\]/g;
+                linhas[j] = linhas[j].replace(regexDeclInvertida, (match, oldVal, nomeVar) => {
+                    let key = nomeVar.toLowerCase();
+                    if (varsParaAtualizar[key] !== undefined) {
+                        areaModificada = true;
+                        return `[[${varsParaAtualizar[key]} = $${nomeVar}]]`;
+                    }
+                    return match;
+                });
+
+                const regexDisplay = /\[\[\s*(?:-?\d+(?:\.\d+)?\s*-->\s*)?\$([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)\s*\]\]/g;
+                linhas[j] = linhas[j].replace(regexDisplay, (match, nomeVar) => {
+                    let key = nomeVar.toLowerCase();
+                    if (varsParaAtualizar[key] !== undefined) {
+                        areaModificada = true;
+                        return `[[ ${varsParaAtualizar[key]} --> $${nomeVar} ]]`;
+                    }
+                    return match;
+                });
+            }
+        }
+        
+        if (areaModificada) area.value = linhas.join('\n');
+    });
+}
+
+// ==========================================================
+// 💡 LINGUAGEM, RECONHECIMENTO E FORMATAÇÃO AUTOMÁTICA
+// ==========================================================
+document.addEventListener('focusout', (e) => {
+    if (e.target && e.target.classList.contains('notes-area')) {
+        const area = e.target;
+        let linhas = area.value.split('\n');
+        let modificado = false;
+        let dicionarioVars = {}; 
+
+        for (let i = 0; i < linhas.length; i++) {
+            let linha = linhas[i].trim();
+            if (linha.includes('✅')) continue;
+
+            let alterouFórmula = false;
+            let erroVariavel = null;
+
+            if (linha.includes('⚠️ ERRO')) {
+                linha = linha.replace(/^⚠️ ERRO.*?->\s*/, '');
+                alterouFórmula = true;
+            }
+
+            // 1. EXTRAIR VALORES (Salvando chaves no dicionário em minúsculo)
+            const regexExtrairFormulas = /\[\[\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*={1,2}\s*(?:\((-?\d+(?:\.\d+)?)\)\$?[a-zA-ZÀ-ÿ_0-9_0-9_]+|(-?\d+(?:\.\d+)?))/g;
+            let matchForm;
+            while ((matchForm = regexExtrairFormulas.exec(linha)) !== null) {
+                let val = parseFloat(matchForm[2] || matchForm[3]);
+                dicionarioVars[matchForm[1].toLowerCase()] = val;
+            }
+            
+            const regexExtNormal = /\[\[\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*={1,2}\s*(-?\d+(?:\.\d+)?)\s*\]\]/g;
+            let matchNormal;
+            while ((matchNormal = regexExtNormal.exec(linha)) !== null) {
+                if(dicionarioVars[matchNormal[1].toLowerCase()] === undefined) {
+                    dicionarioVars[matchNormal[1].toLowerCase()] = parseFloat(matchNormal[2]);
+                }
+            }
+
+            const regexExtInvertida = /\[\[\s*(-?\d+(?:\.\d+)?)\s*={1,2}\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*\]\]/g;
+            let matchInv;
+            while ((matchInv = regexExtInvertida.exec(linha)) !== null) {
+                dicionarioVars[matchInv[2].toLowerCase()] = parseFloat(matchInv[1]);
+            }
+
+            // 🌟 1.5 ATUALIZADOR GLOBAL DINÂMICO
+            // Lê o dicionário de variáveis e atualiza todas as menções dinâmicas ativas
+            // A Regex não pega termos com '$' inicial, então os congelados estão seguros!
+            const regexUpdateDynamics = /\((-?\d+(?:\.\d+)?)\)([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)/g;
+            linha = linha.replace(regexUpdateDynamics, (match, oldVal, varName) => {
+                let key = varName.toLowerCase();
+                if (dicionarioVars[key] !== undefined) {
+                    let newVal = dicionarioVars[key];
+                    if (parseFloat(oldVal) !== newVal) alterouFórmula = true;
+                    return `(${newVal})${varName}`;
+                }
+                return match;
+            });
+
+            // 🌟 ATRIBUTOS DERIVADOS
+            const regexMathDir = /\[\[\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*={1,2}\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+|-?\d+(?:\.\d+)?)\s*([+\-*/])\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+|-?\d+(?:\.\d+)?)\s*\]\]/g;
+            let matchMD;
+            while ((matchMD = regexMathDir.exec(linha)) !== null) {
+                let target = matchMD[1].toLowerCase();
+                let v1 = isNaN(matchMD[2]) ? dicionarioVars[matchMD[2].toLowerCase()] : parseFloat(matchMD[2]);
+                let op = matchMD[3];
+                let v2 = isNaN(matchMD[4]) ? dicionarioVars[matchMD[4].toLowerCase()] : parseFloat(matchMD[4]);
+
+                if (v1 !== undefined && v2 !== undefined) {
+                    dicionarioVars[target] = (op === '+') ? v1 + v2 : (op === '-') ? v1 - v2 : (op === '*') ? v1 * v2 : v1 / v2;
+                } else {
+                    if (v1 === undefined) erroVariavel = matchMD[2];
+                    if (v2 === undefined) erroVariavel = matchMD[4];
+                }
+            }
+
+            const regexMathInv = /\[\[\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+|-?\d+(?:\.\d+)?)\s*([+\-*/])\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+|-?\d+(?:\.\d+)?)\s*={1,2}\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*\]\]/g;
+            let matchMI;
+            while ((matchMI = regexMathInv.exec(linha)) !== null) {
+                let v1 = isNaN(matchMI[1]) ? dicionarioVars[matchMI[1].toLowerCase()] : parseFloat(matchMI[1]);
+                let op = matchMI[2];
+                let v2 = isNaN(matchMI[3]) ? dicionarioVars[matchMI[3].toLowerCase()] : parseFloat(matchMI[3]);
+                let target = matchMI[4].toLowerCase();
+
+                if (v1 !== undefined && v2 !== undefined) {
+                    dicionarioVars[target] = (op === '+') ? v1 + v2 : (op === '-') ? v1 - v2 : (op === '*') ? v1 * v2 : v1 / v2;
+                } else {
+                    if (v1 === undefined) erroVariavel = matchMI[1];
+                    if (v2 === undefined) erroVariavel = matchMI[3];
+                }
+            }
+
+            // AUTO-FORMATAÇÃO VISUAL E HERANÇAS
+            let linhaEsq = linha;
+            linha = linha.replace(/\[\[\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*={1,2}\s*(-?\d+(?:\.\d+)?)\s*\]\]/g, (m, varName, val) => `[[$${varName} = ${val}]]`);
+            linha = linha.replace(/\[\[\s*(-?\d+(?:\.\d+)?)\s*={1,2}\s*\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*\]\]/g, (m, val, varName) => `[[${val} = $${varName}]]`);
+            
+            linha = linha.replace(regexMathDir, (m, t, v1, op, v2) => `[[$${t} = ${v1} ${op} ${v2}]]`);
+            linha = linha.replace(regexMathInv, (m, v1, op, v2, t) => `[[${v1} ${op} ${v2} = $${t}]]`);
+            if (linha !== linhaEsq) alterouFórmula = true;
+
+            // 2. INICIAR NOVOS CONTADORES (Snapshot congelado com $ ou Dinâmico sem $)
+            const regexInitPeriodico = /\[\[\s*(?:\$?([a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*)\s*={1,2}\s*)?(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*|-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*|-?\d+(?:\.\d+)?)\s*(?:-*\s*)?(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*|\d+(?:\.\d+)?)t\s*(?:(?:-*\s*)?(\$?[a-zA-ZÀ-ÿ_]+[a-zA-ZÀ-ÿ0-9_]*|-?\d+(?:\.\d+)?)a)?\s*\]\]/gi;
+            
+            if (regexInitPeriodico.test(linha)) {
+                linha = linha.replace(regexInitPeriodico, (match, targetVar, source, operador, modStr, timeStr, alvoStr) => {
+                    let targetStr = targetVar ? `$${targetVar} = ` : ''; 
+                    
+                    // Módulo inteligente: Decide se a palavra fica solta ou recebe um (valor) na frente
+                    const resolveToken = (str) => {
+                        if (!str) return { val: null, token: '' };
+                        let isStatic = str.startsWith('$');
+                        let rawName = isStatic ? str.substring(1) : str;
+                        if (isNaN(rawName)) { 
+                            let key = rawName.toLowerCase();
+                            let val = dicionarioVars[key] !== undefined ? dicionarioVars[key] : undefined;
+                            return { val: val, token: val !== undefined ? `(${val})${str}` : str };
+                        }
+                        return { val: parseFloat(rawName), token: rawName };
+                    };
+
+                    let base = resolveToken(source);
+                    let mod = resolveToken(modStr);
+                    let time = resolveToken(timeStr);
+                    let alvo = alvoStr ? resolveToken(alvoStr) : { val: null, token: '' };
+
+                    if (base.val === undefined) { erroVariavel = source; return match; }
+                    if (mod.val === undefined) { erroVariavel = modStr; return match; }
+                    if (time.val === undefined) { erroVariavel = timeStr; return match; }
+                    if (alvoStr && alvo.val === undefined) { erroVariavel = alvoStr; return match; }
+
+                    if (targetVar) dicionarioVars[targetVar.toLowerCase()] = base.val;
+
+                    let timeClean = Math.max(1, Math.abs(Math.round(time.val)));
+                    let miolo = ` ${time.token}t${alvoStr ? ` ${alvo.token}a` : ''} `;
+
+                    return `[[ ${targetStr}${base.token} ${operador} ${mod.token}${miolo}| 1/${timeClean} ]]`;
+                });
+                alterouFórmula = true;
+            }
+
+            // 3. CHAMADAS PURAS E ATUALIZAÇÃO DA TELA DE EXIBIÇÃO
+            const regexChamadaPura = /\[\[\s*(?:-?\d+(?:\.\d+)?\s*-->\s*)?\$?([a-zA-ZÀ-ÿ_0-9_0-9_]+)\s*\]\]/g;
+            linha = linha.replace(regexChamadaPura, (match, nomeVar) => {
+                let key = nomeVar.toLowerCase();
+                if (dicionarioVars[key] !== undefined) {
+                    alterouFórmula = true;
+                    return `[[ ${dicionarioVars[key]} --> $${nomeVar} ]]`; 
+                } else {
+                    if (!erroVariavel && !linha.includes('⏰')) erroVariavel = nomeVar;
+                    return match;
+                }
+            });
+
+            // 4. ALARMES E AVISOS DE ERRO
+            if (erroVariavel && !linha.includes('⚠️ ERRO')) {
+                linha = `⚠️ ERRO (Var '${erroVariavel}' não declarada) -> ` + linha;
+                alterouFórmula = true;
+            } else if (!erroVariavel) {
+                const temContadorAtivo = /\[\[.*?\|\s*\d+\/\d+\s*\]\]/.test(linha);
+                if (temContadorAtivo && !linha.includes('⏰')) {
+                    linha = '⏰ ' + linha;
+                    alterouFórmula = true;
+                }
+            }
+
+            if (alterouFórmula) {
+                linhas[i] = linha;
+                modificado = true;
+            }
+        }
+        if (modificado) area.value = linhas.join('\n');
+    }
+});
+</script>
+
+
+
+</body>
+
+
