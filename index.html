@@ -4,7 +4,7 @@
 
 
 <script>
-    // VERSAO 30.3333 - Liguagem simples para programação de formulas e criação de constantes feita 
+    // VERSAO 30.3 - Liguagem simples para programação de formulas e criação de constantes feita 
     // VERSAO 20-28.0 - AJUSTES NA POPUP DE REGRAS e botão setup
     // VERSAO 19 - ajustes daveve load regras
     // VERSAO 12/Mar/2026 - Ajuste gerais e novos implementos especialmente na aba combate
@@ -4878,6 +4878,243 @@ document.addEventListener('focusout', (e) => {
         if (modificado) area.value = linhas.join('\n');
     }
 });
+</script>
+
+
+
+<script>
+// ==========================================
+// CONTROLES FLUTUANTES DO DADO (+ / ↻ / -)
+// ==========================================
+
+// 1. Criar a interface dos botões flutuantes
+const diceControls = document.createElement('div');
+diceControls.id = 'dice-floating-controls';
+Object.assign(diceControls.style, {
+    position: 'absolute',
+    display: 'none',
+    gap: '8px',
+    zIndex: '999999',
+    pointerEvents: 'auto',
+    transform: 'translate(-50%, -100%)', // Centraliza e joga para cima da carta
+    marginTop: '-10px' // Dá um respiro entre os botões e o dado
+});
+
+// Estilo unificado para os botões - Discreto (Efeito Vidro/Translúcido)
+const btnStyle = {
+    background: 'rgba(20, 20, 20, 0.5)',
+    color: 'rgba(255, 255, 255, 0.8)',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    borderRadius: '50%',
+    width: '32px',
+    height: '32px',
+    fontSize: '18px',
+    fontWeight: 'normal',
+    cursor: 'pointer',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    userSelect: 'none',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+    transition: 'all 0.15s ease'
+};
+
+const btnPlus = document.createElement('button');
+btnPlus.innerText = '+';
+Object.assign(btnPlus.style, btnStyle);
+
+const btnFlip = document.createElement('button');
+btnFlip.innerText = '↻'; // Símbolo de virar
+Object.assign(btnFlip.style, btnStyle);
+// Ajuste sutil no tamanho da fonte do ícone para ficar harmonioso
+btnFlip.style.fontSize = '16px'; 
+
+const btnMinus = document.createElement('button');
+btnMinus.innerText = '-';
+Object.assign(btnMinus.style, btnStyle);
+
+// Efeitos de clique e hover
+const addHoverAndPressEffects = (btn) => {
+    btn.addEventListener('mouseenter', () => {
+        btn.style.background = 'rgba(20, 20, 20, 0.8)';
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+    });
+    btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'rgba(20, 20, 20, 0.5)';
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+        btn.style.transform = 'scale(1)';
+    });
+    
+    btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.9)');
+    btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+    
+    btn.addEventListener('touchstart', () => {
+        btn.style.background = 'rgba(20, 20, 20, 0.8)';
+        btn.style.transform = 'scale(0.9)';
+    }, { passive: true });
+    btn.addEventListener('touchend', () => {
+        btn.style.background = 'rgba(20, 20, 20, 0.5)';
+        btn.style.transform = 'scale(1)';
+    });
+};
+
+addHoverAndPressEffects(btnPlus);
+addHoverAndPressEffects(btnFlip);
+addHoverAndPressEffects(btnMinus);
+
+// Adiciona na ordem correta: Menos, Virar, Mais
+diceControls.appendChild(btnMinus);
+diceControls.appendChild(btnFlip);
+diceControls.appendChild(btnPlus);
+
+// 2. Lógicas de Alteração da Face
+function atualizarImagemDado(novoNumero, srcAtual, match) {
+    // Monta o novo SRC da imagem
+    const novoSrc = srcAtual.replace(match[0], `${match[1]}${novoNumero}${match[3]}`);
+            
+    // Atualiza a imagem principal na mesa
+    selectedCard.src = novoSrc;
+            
+    // Sincroniza o atributo data-original-src para o Save funcionar direito
+    if (selectedCard.hasAttribute('data-original-src')) {
+        let dataSrc = selectedCard.getAttribute('data-original-src');
+        let dataMatch = dataSrc.match(/(card)(\d+)(\D*\.jpeg)/i);
+        if (dataMatch) {
+            selectedCard.setAttribute('data-original-src', dataSrc.replace(dataMatch[0], `${dataMatch[1]}${novoNumero}${dataMatch[3]}`));
+        } else {
+            selectedCard.setAttribute('data-original-src', novoSrc);
+        }
+    }
+            
+    // Dispara as funções de feedback
+    if (typeof tocarSomDado === 'function') tocarSomDado();
+    if (typeof mostrarToast === 'function') mostrarToast(`Face: ${novoNumero}`, 'info');
+}
+
+function alterarFaceDado(incremento) {
+    if (typeof selectedCard !== 'undefined' && selectedCard) {
+        const srcAtual = selectedCard.src; 
+        const match = srcAtual.match(/(card)(\d+)(\D*\.jpeg)/i);
+        
+        if (match) {
+            let numeroAtual = parseInt(match[2], 10);
+            let novoNumero = numeroAtual + incremento;
+            
+            if (novoNumero < 1) novoNumero = 1; // Impede zero ou negativo
+            
+            atualizarImagemDado(novoNumero, srcAtual, match);
+        }
+    }
+}
+
+function virarDadoOposto() {
+    if (typeof selectedCard !== 'undefined' && selectedCard) {
+        const srcAtual = selectedCard.src; 
+        const match = srcAtual.match(/(card)(\d+)(\D*\.jpeg)/i);
+        
+        if (match) {
+            let numeroAtual = parseInt(match[2], 10);
+            
+            // 1. Tabela pré-programada de faces por Deck
+            const mapaFaces = {
+                16: 6, 17: 6, 18: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6,
+                40: 3,  // D3
+                42: 6,
+                41: 4,  // D4
+                45: 20, // D20
+                46: 20, // D20
+                47: 8,  // D8
+                61: 12  // D12
+            };
+            
+            // 2. Extrai o número do deck diretamente da URL (ex: "deck41" -> pega "41")
+            let maxFaces = 6; // Padrão de segurança caso não ache
+            const deckMatch = srcAtual.match(/deck(\d+)/i);
+            
+            if (deckMatch && deckMatch[1]) {
+                const numeroDeck = parseInt(deckMatch[1], 10);
+                // Se o deck estiver cadastrado na tabela, usa ele. Senão, mantém 6.
+                if (mapaFaces[numeroDeck]) {
+                    maxFaces = mapaFaces[numeroDeck];
+                }
+            }
+            
+            // 3. Cálculo matemático da face oposta
+            let novoNumero = (maxFaces + 1) - numeroAtual;
+            
+            // 4. Travas de segurança
+            if (novoNumero < 1) novoNumero = 1;
+            if (novoNumero > maxFaces) novoNumero = maxFaces;
+
+            atualizarImagemDado(novoNumero, srcAtual, match);
+        }
+    }
+}
+
+// Eventos de Clique
+diceControls.addEventListener('mousedown', (e) => e.stopPropagation());
+diceControls.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: false });
+
+btnPlus.addEventListener('click', (e) => {
+    e.preventDefault();
+    alterarFaceDado(1);
+});
+
+btnMinus.addEventListener('click', (e) => {
+    e.preventDefault();
+    alterarFaceDado(-1);
+});
+
+btnFlip.addEventListener('click', (e) => {
+    e.preventDefault();
+    virarDadoOposto();
+});
+
+// 3. Monitoramento da Carta Selecionada (Posiciona, exibe e corrige bugs de Save)
+setInterval(() => {
+    
+    // --- SISTEMA ANTI-ZUMBI PARA SAVES ---
+    const controlesNaTela = document.querySelectorAll('#dice-floating-controls');
+    controlesNaTela.forEach(elemento => {
+        if (elemento !== diceControls) {
+            elemento.remove(); // Mata o clone
+        }
+    });
+
+    const tableArea = document.getElementById('table-area') || document.body;
+    if (!tableArea.contains(diceControls)) {
+        tableArea.appendChild(diceControls);
+    }
+    // --------------------------------------
+
+    if (typeof selectedCard !== 'undefined' && selectedCard && selectedCard.classList.contains('selected')) {
+        
+        const isDado = selectedCard.className.toLowerCase().includes('dado') || 
+                       (selectedCard.getAttribute('data-unique-id') && selectedCard.getAttribute('data-unique-id').includes('dice'));
+
+        if (isDado) {
+            diceControls.style.display = 'flex';
+            
+            const left = parseFloat(selectedCard.style.left) || selectedCard.offsetLeft;
+            const top = parseFloat(selectedCard.style.top) || selectedCard.offsetTop;
+            const scale = parseFloat(selectedCard.getAttribute('data-scale')) || 1;
+            const width = selectedCard.offsetWidth * scale;
+            
+            diceControls.style.left = `${left + (width / 2)}px`;
+            diceControls.style.top = `${top}px`;
+        } else {
+            diceControls.style.display = 'none'; 
+        }
+    } else {
+        diceControls.style.display = 'none'; 
+    }
+}, 50);
+
+// ==========================================
+// FIM DOS CONTROLES FLUTUANTES DO DADO
+// ==========================================
 </script>
 
 
