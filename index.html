@@ -4,6 +4,7 @@
 
 
 <script>
+    // VERSAO 31 -DADOS agora com botões superiores de + - e face oposta
     // VERSAO 30.3 - Liguagem simples para programação de formulas e criação de constantes feita 
     // VERSAO 20-28.0 - AJUSTES NA POPUP DE REGRAS e botão setup
     // VERSAO 19 - ajustes daveve load regras
@@ -4926,10 +4927,13 @@ btnPlus.innerText = '+';
 Object.assign(btnPlus.style, btnStyle);
 
 const btnFlip = document.createElement('button');
-btnFlip.innerText = '↻'; // Símbolo de virar
+// Transformamos o botão de virar para conter o ícone e a prévia do número
+btnFlip.innerHTML = '<span style="font-size: 14px; line-height: 1;">↻</span><span id="flip-preview" style="font-size: 10px; position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.6); padding: 0 2px; border-radius: 4px; color: #fff;"></span>';
 Object.assign(btnFlip.style, btnStyle);
-// Ajuste sutil no tamanho da fonte do ícone para ficar harmonioso
-btnFlip.style.fontSize = '16px'; 
+// Ajustes para acomodar o texto interno do botão de flip
+btnFlip.style.position = 'relative';
+btnFlip.style.flexDirection = 'column';
+btnFlip.style.justifyContent = 'center';
 
 const btnMinus = document.createElement('button');
 btnMinus.innerText = '-';
@@ -4970,14 +4974,46 @@ diceControls.appendChild(btnFlip);
 diceControls.appendChild(btnPlus);
 
 // 2. Lógicas de Alteração da Face
+const mapaFaces = {
+    16: 6, 17: 6, 18: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6,
+    40: 3,  // D3
+    42: 6,
+    41: 4,  // D4
+    45: 20, // D20
+    46: 20, // D20
+    47: 8,  // D8
+    61: 12  // D12
+};
+
+function calcularProximoNumeroOposto(elemento) {
+    if (!elemento) return null;
+    const srcAtual = elemento.src; 
+    const match = srcAtual.match(/(card)(\d+)(\D*\.jpeg)/i);
+    if (!match) return null;
+
+    let numeroAtual = parseInt(match[2], 10);
+    let maxFaces = 6;
+    const deckMatch = srcAtual.match(/deck(\d+)/i);
+    
+    if (deckMatch && deckMatch[1]) {
+        const numeroDeck = parseInt(deckMatch[1], 10);
+        if (mapaFaces[numeroDeck]) {
+            maxFaces = mapaFaces[numeroDeck];
+        }
+    }
+    
+    let novoNumero = (maxFaces + 1) - numeroAtual;
+    if (novoNumero < 1) novoNumero = 1;
+    if (novoNumero > maxFaces) novoNumero = maxFaces;
+
+    return novoNumero;
+}
+
 function atualizarImagemDado(novoNumero, srcAtual, match) {
-    // Monta o novo SRC da imagem
     const novoSrc = srcAtual.replace(match[0], `${match[1]}${novoNumero}${match[3]}`);
             
-    // Atualiza a imagem principal na mesa
     selectedCard.src = novoSrc;
             
-    // Sincroniza o atributo data-original-src para o Save funcionar direito
     if (selectedCard.hasAttribute('data-original-src')) {
         let dataSrc = selectedCard.getAttribute('data-original-src');
         let dataMatch = dataSrc.match(/(card)(\d+)(\D*\.jpeg)/i);
@@ -4988,7 +5024,6 @@ function atualizarImagemDado(novoNumero, srcAtual, match) {
         }
     }
             
-    // Dispara as funções de feedback
     if (typeof tocarSomDado === 'function') tocarSomDado();
     if (typeof mostrarToast === 'function') mostrarToast(`Face: ${novoNumero}`, 'info');
 }
@@ -5002,7 +5037,7 @@ function alterarFaceDado(incremento) {
             let numeroAtual = parseInt(match[2], 10);
             let novoNumero = numeroAtual + incremento;
             
-            if (novoNumero < 1) novoNumero = 1; // Impede zero ou negativo
+            if (novoNumero < 1) novoNumero = 1;
             
             atualizarImagemDado(novoNumero, srcAtual, match);
         }
@@ -5015,40 +5050,10 @@ function virarDadoOposto() {
         const match = srcAtual.match(/(card)(\d+)(\D*\.jpeg)/i);
         
         if (match) {
-            let numeroAtual = parseInt(match[2], 10);
-            
-            // 1. Tabela pré-programada de faces por Deck
-            const mapaFaces = {
-                16: 6, 17: 6, 18: 6, 30: 6, 31: 6, 32: 6, 33: 6, 34: 6,
-                40: 3,  // D3
-                42: 6,
-                41: 4,  // D4
-                45: 20, // D20
-                46: 20, // D20
-                47: 8,  // D8
-                61: 12  // D12
-            };
-            
-            // 2. Extrai o número do deck diretamente da URL (ex: "deck41" -> pega "41")
-            let maxFaces = 6; // Padrão de segurança caso não ache
-            const deckMatch = srcAtual.match(/deck(\d+)/i);
-            
-            if (deckMatch && deckMatch[1]) {
-                const numeroDeck = parseInt(deckMatch[1], 10);
-                // Se o deck estiver cadastrado na tabela, usa ele. Senão, mantém 6.
-                if (mapaFaces[numeroDeck]) {
-                    maxFaces = mapaFaces[numeroDeck];
-                }
+            let novoNumero = calcularProximoNumeroOposto(selectedCard);
+            if (novoNumero !== null) {
+                atualizarImagemDado(novoNumero, srcAtual, match);
             }
-            
-            // 3. Cálculo matemático da face oposta
-            let novoNumero = (maxFaces + 1) - numeroAtual;
-            
-            // 4. Travas de segurança
-            if (novoNumero < 1) novoNumero = 1;
-            if (novoNumero > maxFaces) novoNumero = maxFaces;
-
-            atualizarImagemDado(novoNumero, srcAtual, match);
         }
     }
 }
@@ -5072,14 +5077,14 @@ btnFlip.addEventListener('click', (e) => {
     virarDadoOposto();
 });
 
-// 3. Monitoramento da Carta Selecionada (Posiciona, exibe e corrige bugs de Save)
+// 3. Monitoramento da Carta Selecionada (Posiciona, exibe e atualiza a prévia)
 setInterval(() => {
     
     // --- SISTEMA ANTI-ZUMBI PARA SAVES ---
     const controlesNaTela = document.querySelectorAll('#dice-floating-controls');
     controlesNaTela.forEach(elemento => {
         if (elemento !== diceControls) {
-            elemento.remove(); // Mata o clone
+            elemento.remove();
         }
     });
 
@@ -5096,6 +5101,13 @@ setInterval(() => {
 
         if (isDado) {
             diceControls.style.display = 'flex';
+            
+            // Atualiza a prévia do número que vai aparecer ao virar
+            const previewSpan = document.getElementById('flip-preview');
+            if (previewSpan) {
+                const proximoNum = calcularProximoNumeroOposto(selectedCard);
+                previewSpan.innerText = proximoNum !== null ? proximoNum : '';
+            }
             
             const left = parseFloat(selectedCard.style.left) || selectedCard.offsetLeft;
             const top = parseFloat(selectedCard.style.top) || selectedCard.offsetTop;
@@ -5116,7 +5128,6 @@ setInterval(() => {
 // FIM DOS CONTROLES FLUTUANTES DO DADO
 // ==========================================
 </script>
-
 
 
 </body>
